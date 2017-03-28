@@ -1,2 +1,2 @@
 # aresgo
-一个高性能golang框架，包含快速的Http实现、Url路由与转发、Redis的实现、mysql的CURD实现、JSON和INI配置文件的读写，以及其他一些方法的使用
+aresgo是一个快速开发go应用的高性能框架，你可以用她来开发一些Api、Web及其他的一些服务应用，她是一个RESTful的框架。她包含快速的Http实现、Url路由与转发、Redis的实现、Mysql的CURD实现、JSON和INI配置文件的读写，以及其他一些方法的使用。后续会继续将一些常用应用添加到框架中。
