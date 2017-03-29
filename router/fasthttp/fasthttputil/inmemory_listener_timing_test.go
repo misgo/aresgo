@@ -4,8 +4,8 @@ import (
 	"net"
 	"testing"
 
-	"aresgo/router/fasthttp"
-	"aresgo/router/fasthttp/fasthttputil"
+	"github.com/aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp/fasthttputil"
 )
 
 // BenchmarkPlainStreaming measures end-to-end plaintext streaming performance

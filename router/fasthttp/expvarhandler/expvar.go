@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp"
 )
 
 var (

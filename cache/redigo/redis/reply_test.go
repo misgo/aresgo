@@ -19,7 +19,7 @@ import (
 	"reflect"
 	"testing"
 
-	"aresgo/cache/redigo/redis"
+	"github.com/aresgo/cache/redigo/redis"
 )
 
 type valueError struct {

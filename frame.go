@@ -1,10 +1,10 @@
 // frame
-package aresgo
+package github.com/aresgo
 
 import (
-	"aresgo/cache"
-	"aresgo/config"
-	"aresgo/data"
+	"github.com/aresgo/cache"
+	"github.com/aresgo/config"
+	"github.com/aresgo/data"
 	"errors"
 	"fmt"
 	"os"

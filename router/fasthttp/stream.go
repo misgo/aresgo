@@ -5,7 +5,7 @@ import (
 	"io"
 	"sync"
 
-	"aresgo/router/fasthttp/fasthttputil"
+	"github.com/aresgo/router/fasthttp/fasthttputil"
 )
 
 // StreamWriter must write data to w.

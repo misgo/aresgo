@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp"
 )
 
 func ExampleListenAndServe() {

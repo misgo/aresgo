@@ -13,8 +13,8 @@ import (
 	"io"
 	"time"
 
-	"aresgo/router/klauspost/compress/flate"
-	"aresgo/router/klauspost/crc32"
+	"github.com/aresgo/router/klauspost/compress/flate"
+	"github.com/aresgo/router/klauspost/crc32"
 )
 
 const (

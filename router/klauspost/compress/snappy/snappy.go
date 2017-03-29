@@ -5,7 +5,7 @@
 // Package snappy implements the snappy block-based compression format.
 // It aims for very high speeds and reasonable compression.
 //
-// The C++ snappy implementation is at https://aresgo/router/google/snappy
+// The C++ snappy implementation is at https://github.com/aresgo/router/google/snappy
 package snappy
 
 import (
@@ -55,7 +55,7 @@ const (
 	// that an offset fits into a uint16.
 	//
 	// Also, for the framing format (Writer type instead of Encode function),
-	// https://aresgo/router/google/snappy/blob/master/framing_format.txt says
+	// https://github.com/aresgo/router/google/snappy/blob/master/framing_format.txt says
 	// that "the uncompressed data in a chunk must be no longer than 65536
 	// bytes".
 	maxBlockSize = 65536
@@ -80,7 +80,7 @@ const (
 var crcTable = crc32.MakeTable(crc32.Castagnoli)
 
 // crc implements the checksum specified in section 3 of
-// https://aresgo/router/google/snappy/blob/master/framing_format.txt
+// https://github.com/aresgo/router/google/snappy/blob/master/framing_format.txt
 func crc(b []byte) uint32 {
 	c := crc32.Update(0, crcTable, b)
 	return uint32(c>>15|c<<17) + 0xa282ead8

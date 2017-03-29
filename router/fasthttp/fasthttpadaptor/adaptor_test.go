@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	"aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp"
 )
 
 func TestNewFastHTTPHandler(t *testing.T) {

@@ -19,9 +19,9 @@ import (
 	"sync"
 	"testing"
 
-	"aresgo/cache/redigo/internal/redistest"
-	"aresgo/cache/redigo/redis"
-	"aresgo/cache/redigo/redisx"
+	"github.com/aresgo/cache/redigo/internal/redistest"
+	"github.com/aresgo/cache/redigo/redis"
+	"github.com/aresgo/cache/redigo/redisx"
 )
 
 func TestConnMux(t *testing.T) {

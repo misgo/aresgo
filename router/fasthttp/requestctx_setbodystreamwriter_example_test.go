@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp"
 )
 
 func ExampleRequestCtx_SetBodyStreamWriter() {

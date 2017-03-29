@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"aresgo/router/fasthttp/fasthttputil"
+	"github.com/aresgo/router/fasthttp/fasthttputil"
 )
 
 func TestWorkerPoolStartStopSerial(t *testing.T) {

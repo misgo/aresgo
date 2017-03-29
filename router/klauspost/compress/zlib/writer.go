@@ -10,7 +10,7 @@ import (
 	"hash/adler32"
 	"io"
 
-	"aresgo/router/klauspost/compress/flate"
+	"github.com/aresgo/router/klauspost/compress/flate"
 )
 
 // These constants are copied from the flate package, so that code that imports

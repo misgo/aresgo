@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"log"
 
-	"aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp"
 )
 
 // Setup file handlers (aka 'file server config')

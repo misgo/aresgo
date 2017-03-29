@@ -1,6 +1,6 @@
 // Generated, DO NOT EDIT,
 // but copy it to your own project and rename the package.
-// See more at http://aresgo/router/klauspost/cpuid
+// See more at http://github.com/aresgo/router/klauspost/cpuid
 
 package cpuid
 

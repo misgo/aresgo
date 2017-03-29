@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"io"
 
-	"aresgo/router/klauspost/compress/flate"
-	"aresgo/router/klauspost/crc32"
+	"github.com/aresgo/router/klauspost/compress/flate"
+	"github.com/aresgo/router/klauspost/crc32"
 )
 
 // These constants are copied from the flate package, so that code that imports

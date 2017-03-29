@@ -15,7 +15,7 @@
 package redis_test
 
 import (
-	"aresgo/cache/redigo/redis"
+	"github.com/aresgo/cache/redigo/redis"
 	"fmt"
 )
 

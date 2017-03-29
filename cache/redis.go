@@ -7,7 +7,7 @@
 package Cache
 
 import (
-	"aresgo/cache/redigo/redis"
+	"github.com/aresgo/cache/redigo/redis"
 	"errors"
 	"fmt"
 	"reflect"

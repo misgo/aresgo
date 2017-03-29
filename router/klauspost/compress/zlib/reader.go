@@ -30,7 +30,7 @@ import (
 	"hash/adler32"
 	"io"
 
-	"aresgo/router/klauspost/compress/flate"
+	"github.com/aresgo/router/klauspost/compress/flate"
 )
 
 const zlibDeflate = 8

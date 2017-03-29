@@ -125,7 +125,7 @@ func NewWriter(w io.Writer) *Writer {
 
 // NewBufferedWriter returns a new Writer that compresses to w, using the
 // framing format described at
-// https://aresgo/router/google/snappy/blob/master/framing_format.txt
+// https://github.com/aresgo/router/google/snappy/blob/master/framing_format.txt
 //
 // The Writer returned buffers writes. Users must call Close to guarantee all
 // data has been forwarded to the underlying io.Writer. They may also call

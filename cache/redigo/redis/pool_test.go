@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"aresgo/cache/redigo/redis"
+	"github.com/aresgo/cache/redigo/redis"
 )
 
 type poolTestConn struct {

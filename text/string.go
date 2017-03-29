@@ -1,7 +1,7 @@
 /*
 	字符串操作包，针对一些常用的字符串处理且Go本身不提供的应用封装了一些方法
 	字符串的处理，[]byte操作要比string快
-	使用方法：import ("aresgo/text")
+	使用方法：import ("github.com/aresgo/text")
 	func main(){
 		t = Text.FirstCharToUpper("abcd")
 		fmt.Println(t)

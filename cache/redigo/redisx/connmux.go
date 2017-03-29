@@ -18,8 +18,8 @@ import (
 	"errors"
 	"sync"
 
-	"aresgo/cache/redigo/internal"
-	"aresgo/cache/redigo/redis"
+	"github.com/aresgo/cache/redigo/internal"
+	"github.com/aresgo/cache/redigo/redis"
 )
 
 // ConnMux multiplexes one or more connections to a single underlying

@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"aresgo/router/fasthttp/fasthttputil"
+	"github.com/aresgo/router/fasthttp/fasthttputil"
 )
 
 func TestPipelineClientDoSerial(t *testing.T) {

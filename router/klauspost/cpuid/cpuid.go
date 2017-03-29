@@ -7,7 +7,7 @@
 //
 // You can access the CPU information by accessing the shared CPU variable of the cpuid library.
 //
-// Package home: https://aresgo/router/klauspost/cpuid
+// Package home: https://github.com/aresgo/router/klauspost/cpuid
 package cpuid
 
 import "strings"

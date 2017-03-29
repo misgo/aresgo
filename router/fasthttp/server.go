@@ -252,7 +252,7 @@ type Server struct {
 	//
 	// Disabled header names' normalization may be useful only for proxying
 	// incoming requests to other servers expecting case-sensitive
-	// header names. See https://aresgo/router/fasthttp/issues/57
+	// header names. See https://github.com/aresgo/router/fasthttp/issues/57
 	// for details.
 	//
 	// By default request and response header names are normalized, i.e.
@@ -1656,7 +1656,7 @@ func (s *Server) updateReadDeadline(c net.Conn, ctx *RequestCtx, lastDeadlineTim
 
 	// Optimization: update read deadline only if more than 25%
 	// of the last read deadline exceeded.
-	// See https://aresgo/router/golang/go/issues/15133 for details.
+	// See https://github.com/aresgo/router/golang/go/issues/15133 for details.
 	if currentTime.Sub(lastDeadlineTime) > (readTimeout >> 2) {
 		if err := c.SetReadDeadline(currentTime.Add(readTimeout)); err != nil {
 			panic(fmt.Sprintf("BUG: error in SetReadDeadline(%s): %s", readTimeout, err))
@@ -1683,7 +1683,7 @@ func (s *Server) updateWriteDeadline(c net.Conn, ctx *RequestCtx, lastDeadlineTi
 
 	// Optimization: update write deadline only if more than 25%
 	// of the last write deadline exceeded.
-	// See https://aresgo/router/golang/go/issues/15133 for details.
+	// See https://github.com/aresgo/router/golang/go/issues/15133 for details.
 	currentTime := time.Now()
 	if currentTime.Sub(lastDeadlineTime) > (writeTimeout >> 2) {
 		if err := c.SetWriteDeadline(currentTime.Add(writeTimeout)); err != nil {
@@ -1860,7 +1860,7 @@ func (s *Server) acquireCtx(c net.Conn) *RequestCtx {
 // conn is used only for determining local and remote addresses.
 //
 // This function is intended for custom Server implementations.
-// See https://aresgo/router/httpteleport for details.
+// See https://github.com/aresgo/router/httpteleport for details.
 func (ctx *RequestCtx) Init2(conn net.Conn, logger Logger, reduceMemoryUsage bool) {
 	ctx.c = conn
 	ctx.logger.logger = logger

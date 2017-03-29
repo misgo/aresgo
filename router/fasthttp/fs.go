@@ -16,7 +16,7 @@ import (
 	"sync"
 	"time"
 
-	"aresgo/router/klauspost/compress/gzip"
+	"github.com/aresgo/router/klauspost/compress/gzip"
 )
 
 // ServeFileBytesUncompressed returns HTTP response containing file contents

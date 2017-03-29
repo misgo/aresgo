@@ -3,7 +3,7 @@ package fasthttp_test
 import (
 	"log"
 
-	"aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp"
 )
 
 func ExampleFS() {

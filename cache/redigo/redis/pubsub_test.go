@@ -20,7 +20,7 @@ import (
 	"sync"
 	"testing"
 
-	"aresgo/cache/redigo/redis"
+	"github.com/aresgo/cache/redigo/redis"
 )
 
 func publish(channel, value interface{}) {

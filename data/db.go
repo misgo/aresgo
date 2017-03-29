@@ -7,8 +7,8 @@
 package Db
 
 import (
-	_ "aresgo/data/mysql"
-	"aresgo/text"
+	_ "github.com/aresgo/data/mysql"
+	"github.com/aresgo/text"
 	"database/sql"
 	"errors"
 	"fmt"

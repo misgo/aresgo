@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"aresgo/router/fasthttp"
-	"aresgo/router/fasthttp/reuseport"
+	"github.com/aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp/reuseport"
 )
 
 func ExampleListen() {

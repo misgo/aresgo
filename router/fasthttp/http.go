@@ -10,7 +10,7 @@ import (
 	"os"
 	"sync"
 
-	"aresgo/router/bytebufferpool"
+	"github.com/aresgo/router/bytebufferpool"
 )
 
 // Request represents HTTP request.

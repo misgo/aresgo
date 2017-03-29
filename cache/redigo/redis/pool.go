@@ -25,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"aresgo/cache/redigo/internal"
+	"github.com/aresgo/cache/redigo/internal"
 )
 
 var nowFunc = time.Now // for testing

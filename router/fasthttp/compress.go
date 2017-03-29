@@ -6,10 +6,10 @@ import (
 	"os"
 	"sync"
 
-	"aresgo/router/fasthttp/stackless"
-	"aresgo/router/klauspost/compress/flate"
-	"aresgo/router/klauspost/compress/gzip"
-	"aresgo/router/klauspost/compress/zlib"
+	"github.com/aresgo/router/fasthttp/stackless"
+	"github.com/aresgo/router/klauspost/compress/flate"
+	"github.com/aresgo/router/klauspost/compress/gzip"
+	"github.com/aresgo/router/klauspost/compress/zlib"
 )
 
 // Supported compression levels.

@@ -172,7 +172,7 @@ func (ini *IniConfig) parseFile(name string) (*IniConfigContainer, error) {
 // 解析ini结构的数据
 func (ini *IniConfig) ParseData(data []byte) (Configer, error) {
 	// Save memory data to temporary file
-	tmpName := path.Join(os.TempDir(), "aresgo", fmt.Sprintf("%d", time.Now().Nanosecond()))
+	tmpName := path.Join(os.TempDir(), "github.com/aresgo", fmt.Sprintf("%d", time.Now().Nanosecond()))
 	os.MkdirAll(path.Dir(tmpName), os.ModePerm)
 	if err := ioutil.WriteFile(tmpName, data, 0655); err != nil {
 		return nil, err

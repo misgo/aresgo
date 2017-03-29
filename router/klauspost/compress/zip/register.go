@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"aresgo/router/klauspost/compress/flate"
+	"github.com/aresgo/router/klauspost/compress/flate"
 )
 
 // A Compressor returns a compressing writer, writing to the

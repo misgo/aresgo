@@ -3,7 +3,7 @@ package fasthttp_test
 import (
 	"fmt"
 
-	"aresgo/router/fasthttp"
+	"github.com/aresgo/router/fasthttp"
 )
 
 func ExampleByteBuffer() {

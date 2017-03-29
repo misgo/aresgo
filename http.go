@@ -5,11 +5,11 @@
 	@since  : 2016-12-05
 	@version: 1.0.1
 */
-package aresgo
+package github.com/aresgo
 
 import (
-	"aresgo/router/fasthttp"
-	"aresgo/text"
+	"github.com/aresgo/router/fasthttp"
+	"github.com/aresgo/text"
 	"fmt"
 	"log"
 	"net"
@@ -107,7 +107,7 @@ func (router *Router) Listen(addr string) {
 
 	s.FastServer = &fasthttp.Server{
 		Handler: s.RouterHandler,
-		Name:    "Aresgo server",
+		Name:    "github.com/aresgo server",
 	}
 	//控制台输出服务器信息
 	timeNow := time.Now()
