@@ -22,18 +22,17 @@ aresgo是一个快速开发go应用的高性能框架，你可以用她来开发
 -------------------
 使用aresgo框架，你只需要在源文件都加上：
 
-```go
+
 import "github.com/aresgo"
-```
+
 
 或者如果使用框架中的某个包的方法，可以这样使用：
 
-```go
-import"github.com/aresgo/text"
-```
 
-#http实现
-=====
+import"github.com/aresgo/text"
+
+
+##http实现
 
 ```go
 import "github.com/aresgo"
