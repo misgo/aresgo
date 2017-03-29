@@ -22,43 +22,14 @@ aresgo是一个快速开发go应用的高性能框架，你可以用她来开发
 -------------------
 使用aresgo框架，你只需要在源文件都加上：
 
-
+```go
 import "github.com/aresgo"
-
+```
 
 或者如果使用框架中的某个包的方法，可以这样使用：
 
-
-import"github.com/aresgo/text"
-
-
-##http实现
-
 ```go
-import "github.com/aresgo"
-
-func main(){
-//初始化路由
-router := aresgo.Routing()
-
-//定义404错误页
-router.Get("/404.html", NotFound)
-
-//输出方法
-router.Get("/hello/:name", Hello) 
-
-}
-//404错误页
-func NotFound(ctx *aresgo.Context) {
-	fmt.Fprint(ctx, "页面不存在!\n")
-}
-
-// 欢迎页
-func Hello(ctx *aresgo.Context) {
-	fmt.Fprintf(ctx, "hello, 欢迎【%s】光临!\n", ctx.UserValue("name"))
-}
-
+import"github.com/aresgo/text"
 ```
 
 
-###Mysq实现
