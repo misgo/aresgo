@@ -31,20 +31,30 @@ import "github.com/aresgo/text"
 http实现
 ---------------
 ```go
+
 import "github.com/aresgo"
 
 func main(){
-//初始化路由
-router := aresgo.Routing()
 
-//定义404错误页
-router.Get("/404.html", NotFound)
+  //初始化路由
+  router := aresgo.Routing()
 
-//输出方法
-router.Get("/hello/:name", Hello) 
+  //定义404错误页
+  router.Get("/404.html", NotFound)
+  router.NotFound = NotFound  //只要访问不存在的方法或地址就会跳转这个页面
 
-//注册对象，注册后对象所有公共方法可以被调用
-router.Register("/passport/", &action.UserAction{}, aresgo.ActionGet) 
+  //输出方法
+  router.Get("/hello/:name", Hello)   //Get方法请求，Post请求时会报错
+  router.Post("/hello/:name", Hello)  //Post方法请求，Get请求时会报错
+
+  //注册对象，注册后对象所有公共方法可以被调用
+  router.Register("/passport/", &action.UserAction{}, aresgo.ActionGet) 
+  
+  //POST or GET or ...请求被拒绝时执行的方法，取决于路由方法的设置
+  router.MethodNotAllowed = DisAllowedMethod  
+  
+  //监听IP与端口，阻塞式服务
+  router.Listen(“127.0.0.1:9000”)
 
 }
 //404错误页
@@ -55,6 +65,7 @@ func NotFound(ctx *aresgo.Context) {
 func Hello(ctx *aresgo.Context) {
 	fmt.Fprintf(ctx, "hello, 欢迎【%s】光临!\n", ctx.UserValue("name"))
 }
+
 ```
 
 * 使用Registerr方法，注册的struct的公共方法可以被调用，方法名称需要首字母大写其他小写
