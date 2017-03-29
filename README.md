@@ -32,6 +32,35 @@ import "github.com/aresgo"
 import "github.com/aresgo/text"
 
 
-##http实现
+http实现
 ---------------
-fasthttp
+```go
+import "github.com/aresgo"
+
+func main(){
+//初始化路由
+router := aresgo.Routing()
+
+//定义404错误页
+router.Get("/404.html", NotFound)
+
+//输出方法
+router.Get("/hello/:name", Hello) 
+
+//注册对象，注册后对象所有公共方法可以被调用
+router.Register("/passport/", &action.UserAction{}, aresgo.ActionGet) 
+
+}
+//404错误页
+func NotFound(ctx *aresgo.Context) {
+	fmt.Fprint(ctx, "页面不存在!\n")
+}
+
+// 欢迎页
+func Hello(ctx *aresgo.Context) {
+	fmt.Fprintf(ctx, "hello, 欢迎【%s】光临!\n", ctx.UserValue("name"))
+}
+
+```
+>使用Registerr方法，注册的struct的公共方法可以被调用，方法名称需要首字母大写其他小写
+>路由参数支持“：”和“*”，或者常量
