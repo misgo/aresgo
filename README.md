@@ -46,7 +46,7 @@ router.Get("/404.html", NotFound)
 router.Get("/hello/:name", Hello) 
 
 }
-
+//404错误页
 func NotFound(ctx *aresgo.Context) {
 	fmt.Fprint(ctx, "页面不存在!\n")
 }
