@@ -22,15 +22,11 @@ aresgo是一个快速开发go应用的高性能框架，你可以用她来开发
 -------------------
 使用aresgo框架，你只需要在源文件都加上：
 
-
 import "github.com/aresgo"
-
 
 或者如果使用框架中的某个包的方法，可以这样使用：
 
-
 import "github.com/aresgo/text"
-
 
 http实现
 ---------------
@@ -55,12 +51,10 @@ router.Register("/passport/", &action.UserAction{}, aresgo.ActionGet)
 func NotFound(ctx *aresgo.Context) {
 	fmt.Fprint(ctx, "页面不存在!\n")
 }
-
 // 欢迎页
 func Hello(ctx *aresgo.Context) {
 	fmt.Fprintf(ctx, "hello, 欢迎【%s】光临!\n", ctx.UserValue("name"))
 }
-
 ```
 
 * 使用Registerr方法，注册的struct的公共方法可以被调用，方法名称需要首字母大写其他小写
