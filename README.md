@@ -16,9 +16,18 @@ aresgo是一个快速开发go应用的高性能框架，你可以用她来开发
 --------------------
 使用“go get”命令：
 
->go get github.com/misgo/aresgo
+>$ go get github.com/misgo/aresgo
 
 用法（Usage）
 -------------------
+使用aresgo框架，你只需要在源文件都加上：
 
+```go
+import "aresgo"
+```
 
+或者如果使用框架中的某个包的方法，可以这样使用：
+
+```go
+import "aresgo/text"
+```
