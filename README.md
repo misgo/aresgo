@@ -54,7 +54,7 @@ func main(){
   router.MethodNotAllowed = DisAllowedMethod  
   
   //监听IP与端口，阻塞式服务
-  router.Listen(“127.0.0.1:9000”)
+  router.Listen(“127.0.0.1:8010”)
 
 }
 //404错误页
@@ -69,4 +69,58 @@ func Hello(ctx *aresgo.Context) {
 ```
 
 * 使用Registerr方法，注册的struct的公共方法可以被调用，方法名称需要首字母大写其他小写
-* 路由参数支持“：”和“*”，或者常量
+* 路由参数支持“：”和“*”
+
+mysql实现
+----------------
+先导入aresgo框架
+>import "github.com/aresgo"
+
+需要指定数据库配置的路径：
+>aresgo.DbConfigPath = [你的数据库配置文件路径] 
+*数据库配置路径是绝对路径
+*配置文件格式是json格式：
+```go
+{
+    "dev": { 
+        "master": {
+            "ip": "127.0.0.1",
+            "port": "3306",
+            "user": "root",
+            "password": "123456",
+            "charset": "utf8",
+            "db": "gomaster",
+			"tablepre":"t_"
+        },
+        "slave": {
+            "ip": "127.0.0.1",
+            "port": "3306",
+            "user": "root",
+            "password": "123456",
+            "charset": "utf8",
+            "db": "goslave",
+			"tablepre":"t_"
+        }
+    },
+    "online": {
+        "master": {
+            "ip": "127.0.0.1",
+            "port": "3306",
+            "user": "root",
+            "password": "123456",
+            "charset": "utf8",
+            "db": "gomaster",
+			"tablepre":"t_"
+        },
+        "slave": {
+            "ip": "127.0.0.1",
+            "port": "3306",
+            "user": "root",
+            "password": "123456",
+            "charset": "utf8",
+            "db": "goslave",
+			"tablepre":"t_"
+        }
+    }
+}
+```
