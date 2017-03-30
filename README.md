@@ -124,11 +124,11 @@ mysql实现
 ```
 * 执行一段SQL：
 ```go
-res, err := aresgo.D("dev").Execute(aresgo.DbInsert, "insert t_user set Username='test1' ")
+> res, err := aresgo.D("dev").Execute(aresgo.DbInsert, "insert t_user set Username='test1' ")
 ```
 * 查询一行数据
 ```go
-res,err := aresgo.D("dev").GetRow("SELECT Uid,Username,Email,Gender FROM t_user WHERE Uid<10")
+> res,err := aresgo.D("dev").GetRow("SELECT Uid,Username,Email,Gender FROM t_user WHERE Uid<10")
 ```
 * 查询列表
  ```go
