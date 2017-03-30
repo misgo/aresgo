@@ -78,8 +78,9 @@ mysql实现
 
 需要指定数据库配置的路径：
 >aresgo.DbConfigPath = [你的数据库配置文件路径] 
-*数据库配置路径是绝对路径
-*配置文件格式是json格式：
+
+* 数据库配置路径是绝对路径
+* 配置文件格式是json格式：
 ```go
 {
     "dev": { 
@@ -90,7 +91,6 @@ mysql实现
             "password": "123456",
             "charset": "utf8",
             "db": "gomaster",
-			"tablepre":"t_"
         },
         "slave": {
             "ip": "127.0.0.1",
@@ -99,7 +99,6 @@ mysql实现
             "password": "123456",
             "charset": "utf8",
             "db": "goslave",
-			"tablepre":"t_"
         }
     },
     "online": {
@@ -110,7 +109,6 @@ mysql实现
             "password": "123456",
             "charset": "utf8",
             "db": "gomaster",
-			"tablepre":"t_"
         },
         "slave": {
             "ip": "127.0.0.1",
@@ -119,8 +117,33 @@ mysql实现
             "password": "123456",
             "charset": "utf8",
             "db": "goslave",
-			"tablepre":"t_"
         }
     }
 }
+```
+* 执行一段SQL：
+```go
+>res, err := aresgo.D("dev").Execute(aresgo.DbInsert, "insert t_user set Username='test1' ")
+```
+* 查询一行数据
+```go
+>res,err := aresgo.D("dev").GetRow("SELECT Uid,Username,Email,Gender FROM t_user WHERE Uid<10")
+```
+* 查询列表
+ ```go
+>res, err := aresgo.D("dev").Query("SELECT Uid,Username,Email,Gender FROM t_user WHERE Uid<10")
+```
+* 删除
+```go
+>res, err:= aresgo.D("dev").Table("t_user").Where("Uid =?", 9).Delete()
+```
+
+* 更新
+```go
+   fields := make(map[string]interface{})
+   fields["Username"] = "administrator"
+   fields["Password"] = "21232f297a57a5a743894a0e4a801fc3"
+   fields["Createtime"] = 1486463479
+   fields["Gender"] = 2
+   res, err:= aresgo.D("dev").Table("t_user").Where("Uid = ? ", 1).Update(fields)
 ```
