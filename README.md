@@ -22,11 +22,11 @@ aresgo是一个简单快速开发go应用的高性能框架，你可以用她来
 -------------------
 使用aresgo框架，你只需要在源文件都加上：
 
->import "github.com/aresgo"
+> import "github.com/aresgo"
 
 或者如果使用框架中的某个包的方法，可以这样使用：
 
->import "github.com/aresgo/text"
+> import "github.com/aresgo/text"
 
 http实现
 ---------------
@@ -88,7 +88,7 @@ mysql实现
 {
     "dev": { 
         "master": {
-            "ip": "127.0.0.1",
+            "ip": "127.0.0.1",  
             "port": "3306",
             "user": "root",
             "password": "123456",
@@ -105,21 +105,7 @@ mysql实现
         }
     },
     "online": {
-        "master": {
-            "ip": "127.0.0.1",
-            "port": "3306",
-            "user": "root",
-            "password": "123456",
-            "charset": "utf8",
-            "db": "gomaster",
-        },
-        "slave": {
-            "ip": "127.0.0.1",
-            "port": "3306",
-            "user": "root",
-            "password": "123456",
-            "charset": "utf8",
-            "db": "goslave",
+           ...
         }
     }
 }
@@ -178,7 +164,7 @@ res, err:= aresgo.D("dev").Table("t_user").Where("Uid = ? ", 1).Update(fields)
 ```
 > tag标签：table->表名，filed->该字段在数据库中的字段名称，key->主键用pk，auto->是否是自增
 
-详细实例可以参看aresgo-demo
+> 更多数据库实例可以参看aresgo-demo
 
 redis实现
 --------------
@@ -195,41 +181,25 @@ redis实现
         "master": {
             "ip": "10.168.31.33",
             "port": "6379",
-			"password":"123456",
-			"maxidle":10,
-			"idletimeout":10,
-			"maxactive":1024,
-			"db":5
+            "password":"123456",
+            "maxidle":10,
+            "idletimeout":10,
+            "maxactive":1024,
+             "db":5
         },
         "slave": {
             "ip": "10.168.31.33",
             "port": "6379",
-			"password":"",
-			"maxidle":10,
+            "password":"",
+            "maxidle":10,
             "idletimeout":10,
-			"maxactive":1024,
-			"db":5
+            "maxactive":1024,
+             "db":5
         }
     },
     "other": {
-        "master": {
-            "ip": "127.0.0.1",
-            "port": "6379",
-			"password":"",
-			"maxidle":10,
-            "idletimeout":180,
-			"maxactive":1024,
-			"db":5
-        },
-        "slave": {
-           "ip": "127.0.0.1",
-            "port": "6379",
-			"password":"",
-			"maxidle":10,
-            "idletimeout":180,
-			"maxactive":1024,
-			"db":5
-        }
+       ...
+      }
     }
 }
 ```
@@ -237,17 +207,14 @@ redis实现
 ```go
 aresgo.R("dev").Select(5)
 ```
-
 * 获取一个字符串型数据
 ```go
 g1 :=aresgo.R("dev").GetString("c")
 ```
-
 * Get多条
 ```go 
 g := aresgo.R("dev").GetStrList("a", "b", "c", "d", "e")
 ```
-
 * Set多条
 ```go
   var setVals map[string]interface{} = make(map[string]interface{}, 0)
@@ -264,5 +231,79 @@ hg1 :=aresgo.R("dev").GetString("h1", "v1")
 ```go
 t1 :=aresgo.R("dev").SetTimeout("a", 60)
 ```
-
 >更多redis实现的例子参见aresgo-demo
+
+配置文件操作
+-------------
+导入配置文件包
+```go
+import(
+    "github.com/aresgo"
+   "github.com/aresgo/config"
+)
+```
+
+实例化配置文件
+```go
+jsonConfiger, err1:= aresgo.LoadConfig("json", [json配置文件路径])
+iniConfiger, err 2:= aresgo.LoadConfig("ini", [ini配置文件路径])
+```
+
+**Json文件内容**
+```go
+{
+    "dev": {
+        "master": {
+            "ip": "10.168.31.33",
+            "port": "6379",
+            "password":"123456",
+            "maxidle":10,
+            "idletimeout":10,
+            "maxactive":1024,
+             "db":5
+        },
+        "slave": {
+           ...
+        }
+    },
+    "other": {
+       ...
+      }
+    }
+}
+```
+**ini文件内容**
+```go
+[dev.master]
+ip=127.0.0.1
+port=6379
+db=gomaster
+```
+
+获取数据库实例dev中主库配置master的ip地址:
+> json
+```go
+ip := jsonConfiger.String("dev.master.ip")
+```
+>ini
+```go
+ip := iniConfiger.String("dev.master->ip")
+```
+获取数据库实例dev中主库配置master的ip2地址，如果不存在返回一个默认值:
+> json
+```go
+ip := jsonConfiger.DefaultString("dev.master.ip2", "192.168.0.1")
+```
+>ini
+```go
+ip := iniConfiger.DefaultString("dev.master->ip2", "not choose")
+```
+获取数据库实例dev中主库配置的所有项
+> json
+```go
+obj, err := jsonConfiger.GetVal("dev.master") 
+```
+> ini
+```go
+obj, err:= iniConfiger.GetSection("dev.master") 
+```
