@@ -68,8 +68,9 @@ func Hello(ctx *aresgo.Context) {
 
 ```
 
-* 使用Registerr方法，注册的struct的公共方法可以被调用，方法名称需要首字母大写其他小写
+* 使用Register方法，注册的struct的公共方法可以被调用，方法名称需要首字母大写其他小写
 * 路由参数支持“：”和“*”
+* aresgo.Context继承fasthttp.RequestCtx，维护一个请求的上下文
 
 mysql实现
 ----------------
@@ -123,27 +124,59 @@ mysql实现
 ```
 * 执行一段SQL：
 ```go
->res, err := aresgo.D("dev").Execute(aresgo.DbInsert, "insert t_user set Username='test1' ")
+res, err := aresgo.D("dev").Execute(aresgo.DbInsert, "insert t_user set Username='test1' ")
 ```
 * 查询一行数据
 ```go
->res,err := aresgo.D("dev").GetRow("SELECT Uid,Username,Email,Gender FROM t_user WHERE Uid<10")
+res,err := aresgo.D("dev").GetRow("SELECT Uid,Username,Email,Gender FROM t_user WHERE Uid<10")
 ```
 * 查询列表
  ```go
->res, err := aresgo.D("dev").Query("SELECT Uid,Username,Email,Gender FROM t_user WHERE Uid<10")
+res, err := aresgo.D("dev").Query("SELECT Uid,Username,Email,Gender FROM t_user WHERE Uid<10")
 ```
 * 删除
 ```go
->res, err:= aresgo.D("dev").Table("t_user").Where("Uid =?", 9).Delete()
+res, err:= aresgo.D("dev").Table("t_user").Where("Uid =?", 9).Delete()
 ```
-
 * 更新
 ```go
-   fields := make(map[string]interface{})
-   fields["Username"] = "administrator"
-   fields["Password"] = "21232f297a57a5a743894a0e4a801fc3"
-   fields["Createtime"] = 1486463479
-   fields["Gender"] = 2
-   res, err:= aresgo.D("dev").Table("t_user").Where("Uid = ? ", 1).Update(fields)
+fields := make(map[string]interface{})
+fields["Username"] = "administrator"
+fields["Password"] = "21232f297a57a5a743894a0e4a801fc3"
+fields["Createtime"] = 1486463479
+fields["Gender"] = 2
+res, err:= aresgo.D("dev").Table("t_user").Where("Uid = ? ", 1).Update(fields)
 ```
+* 还可以进行对象操作，比如查询是否能在数据库找到此对象的映射
+先定义一个对象（struct）
+```go
+  //用户对象
+  UserInfo struct {
+     Uid        int64  `table:"t_user" key:"pk" auto:"1" `
+     UserName   string `field:"Username"`
+     Email      string
+     Mobile     string
+     Pwd        string `field:"Password"`
+     NickName   string `field:"Nickname"`
+     Gender     int8
+     Birth      time.Time `type:"date"`
+      CreateTime time.Time `field:"Createtime" type:"int"`
+      Group      GroupInfo `key:"notfield"`
+   }
+   //用户组对象
+   GroupInfo struct {
+       Gid  int32
+       Name string
+    }
+    
+    func main(){
+      var user UserInfo
+      err := aresgo.D("dev").Where("Uid = ?", 3).Find(&user)
+    }
+```
+> tag标签：table->表名，filed->该字段在数据库中的字段名称，key->主键用pk，auto->是否是自增
+
+详细实例可以参看aresgo-demo
+
+redis实现
+--------------
