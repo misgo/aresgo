@@ -1,8 +1,6 @@
-// Copyright 2013 Julien Schmidt. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be found
-// in the LICENSE file.
+//路由树方法库
 
-package github.com/aresgo
+package aresgo
 
 import (
 	"strings"

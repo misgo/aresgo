@@ -1,16 +1,18 @@
 // frame
-package github.com/aresgo
+package aresgo
 
 import (
-	"github.com/aresgo/cache"
-	"github.com/aresgo/config"
-	"github.com/aresgo/data"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/aresgo/cache"
+	"github.com/aresgo/config"
+	"github.com/aresgo/data"
 )
+
 //常量定义
 const (
 	Version = "1.0"
@@ -37,6 +39,7 @@ const (
 	DbDelete = "DELETE"
 	DbSelect = "SELECT"
 )
+
 //结构体定义
 type (
 	FrameWork struct{}

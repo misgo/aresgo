@@ -5,11 +5,9 @@
 	@since  : 2016-12-05
 	@version: 1.0.1
 */
-package github.com/aresgo
+package aresgo
 
 import (
-	"github.com/aresgo/router/fasthttp"
-	"github.com/aresgo/text"
 	"fmt"
 	"log"
 	"net"
@@ -17,6 +15,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/aresgo/router/fasthttp"
+	"github.com/aresgo/text"
 )
 
 const (
