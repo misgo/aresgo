@@ -8,9 +8,9 @@ aresgo是一个简单快速开发go应用的高性能框架，你可以用她来
 
 * 实现思路借鉴iris-go,beego等框架
 * http实现封装了fasthttp，fasthttp的方法和实现可以直接使用，如果使用fasthttp请引入包：github.com/aresgo/router/fasthttp
-* mysql的实现封装了go-sql-driver，并作了CURD的扩展，同时考虑mysql的主从结构，可以通过配置文件进行主从配置，读写分离，从而使用更灵活更方便
-* redis的实现封装garyburd/redigo，可以通过配置文件进行主从配置
-* 配置文件管理（Json和ini）采用beego的框架方法
+* mysql的实现封装了go-sql-driver，**支持多数据库实例和主从配置，可以实现读写分离**，并作了CURD的扩展，可以通过对象(struct)的方式进行修改
+* redis的实现封装garyburd/redigo，**支持多个实例和主从配置，可以实现读写分离**
+* 配置文件管理（Json和ini）采用beego的框架方法并做了一些修改，已集成到aresgo框架中可以很方便的使用
 
 安装（Installation）
 --------------------
@@ -71,16 +71,18 @@ func Hello(ctx *aresgo.Context) {
 * 使用Register方法，注册的struct的公共方法可以被调用，方法名称需要首字母大写其他小写
 * 路由参数支持“：”和“*”
 * aresgo.Context继承fasthttp.RequestCtx，维护一个请求的上下文
+* cookie和session的实现目前使用fasthttp中的实现并未集成到框架，后续会持续封装。如使用请导入包：github.com/aresgo/router/fasthttp
 
 mysql实现
 ----------------
-先导入aresgo框架
+导入aresgo框架
 >import "github.com/aresgo"
 
 需要指定数据库配置的路径：
 >aresgo.DbConfigPath = [你的数据库配置文件路径] 
 
 * 数据库配置路径是绝对路径
+* 数据库支持多数据库实例及主从配置
 * 配置文件格式是json格式：
 ```go
 {
@@ -180,3 +182,87 @@ res, err:= aresgo.D("dev").Table("t_user").Where("Uid = ? ", 1).Update(fields)
 
 redis实现
 --------------
+导入aresgo框架
+>import "github.com/aresgo"
+
+需要指定redis配置的路径：
+>aresgo.RedisConfigPath = [你的redis配置文件路径] 
+
+配置文件的Json格式
+```go
+{
+    "dev": {
+        "master": {
+            "ip": "10.168.31.33",
+            "port": "6379",
+			"password":"123456",
+			"maxidle":10,
+			"idletimeout":10,
+			"maxactive":1024,
+			"db":5
+        },
+        "slave": {
+            "ip": "10.168.31.33",
+            "port": "6379",
+			"password":"",
+			"maxidle":10,
+            "idletimeout":10,
+			"maxactive":1024,
+			"db":5
+        }
+    },
+    "other": {
+        "master": {
+            "ip": "127.0.0.1",
+            "port": "6379",
+			"password":"",
+			"maxidle":10,
+            "idletimeout":180,
+			"maxactive":1024,
+			"db":5
+        },
+        "slave": {
+           "ip": "127.0.0.1",
+            "port": "6379",
+			"password":"",
+			"maxidle":10,
+            "idletimeout":180,
+			"maxactive":1024,
+			"db":5
+        }
+    }
+}
+```
+* 选择库
+```go
+aresgo.R("dev").Select(5)
+```
+
+* 获取一个字符串型数据
+```go
+g1 :=aresgo.R("dev").GetString("c")
+```
+
+* Get多条
+```go 
+g := aresgo.R("dev").GetStrList("a", "b", "c", "d", "e")
+```
+
+* Set多条
+```go
+  var setVals map[string]interface{} = make(map[string]interface{}, 0)
+  setVals["v1"] = 1234567
+  setVals["v2"] = "abcdefg"
+  setVals["v3"] = false //布尔型保存后：true:1;false:0
+  s := aresgo.R("dev").SetValues(setVals)
+  ```
+* hash Get
+```go
+hg1 :=aresgo.R("dev").GetString("h1", "v1") 
+```
+*设置键的失效时间
+```go
+t1 :=aresgo.R("dev").SetTimeout("a", 60)
+```
+
+>更多redis实现的例子参见aresgo-demo
