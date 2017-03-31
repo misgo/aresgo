@@ -28,6 +28,8 @@ aresgo是一个简单快速开发go应用的高性能框架，你可以用她来
 
 > import "github.com/aresgo/text"
 
+> **更多实例参见：[aresgo-demo](https://github.com/misgo/aresgo-demo)**
+
 http实现
 ---------------
 ```go
@@ -194,7 +196,7 @@ redis实现
             "maxidle":10,
             "idletimeout":10,
             "maxactive":1024,
-             "db":5
+            "db":5
         }
     },
     "other": {
@@ -239,7 +241,7 @@ t1 :=aresgo.R("dev").SetTimeout("a", 60)
 ```go
 import(
     "github.com/aresgo"
-   "github.com/aresgo/config"
+    "github.com/aresgo/config"
 )
 ```
 
