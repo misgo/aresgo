@@ -75,6 +75,8 @@ func Hello(ctx *aresgo.Context) {
 * aresgo.Context继承fasthttp.RequestCtx，维护一个请求的上下文
 * cookie和session的实现目前使用fasthttp中的实现并未集成到框架，后续会持续封装。如使用请导入包：github.com/aresgo/router/fasthttp
 
+> 更多http实例参见：[aresgo-demo/Server.go](https://github.com/misgo/aresgo-demo/blob/master/Server.go)
+
 mysql实现
 ----------------
 导入aresgo框架
@@ -166,7 +168,7 @@ res, err:= aresgo.D("dev").Table("t_user").Where("Uid = ? ", 1).Update(fields)
 ```
 > tag标签：table->表名，filed->该字段在数据库中的字段名称，key->主键用pk，auto->是否是自增
 
-> 更多数据库实例可以参看aresgo-demo
+> 更多数据库实例可以参见：[aresgo-demo](https://github.com/misgo/aresgo-demo/blob/master/Database.go)
 
 redis实现
 --------------
@@ -233,7 +235,7 @@ hg1 :=aresgo.R("dev").GetString("h1", "v1")
 ```go
 t1 :=aresgo.R("dev").SetTimeout("a", 60)
 ```
->更多redis实现的例子参见aresgo-demo
+>更多redis实现的例子参见[aresgo-demo](https://github.com/misgo/aresgo-demo/blob/master/Redis.go)
 
 配置文件操作
 -------------
@@ -308,4 +310,6 @@ obj, err := jsonConfiger.GetVal("dev.master")
 > ini
 ```go
 obj, err:= iniConfiger.GetSection("dev.master") 
+
+>更多redis实现的例子参见[aresgo-demo](https://github.com/misgo/aresgo-demo/blob/master/Config.go)
 ```
