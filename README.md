@@ -311,5 +311,5 @@ obj, err := jsonConfiger.GetVal("dev.master")
 ```go
 obj, err:= iniConfiger.GetSection("dev.master") 
 
->更多redis实现的例子参见[aresgo-demo/Config.go](https://github.com/misgo/aresgo-demo/blob/master/Config.go)
-```
+> 更多redis实现的例子参见[aresgo-demo/Config.go](https://github.com/misgo/aresgo-demo/blob/master/Config.go)
+
