@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-//将字符串进行Md5加密
+//判断当前路径的文件是否存在
 func IsExists(path string) bool {
 	_, err := os.Stat(path)
 	if err != nil {

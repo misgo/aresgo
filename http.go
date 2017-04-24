@@ -1,6 +1,5 @@
 /*
 	框架路由包,封装了监听路由方法，及路由后回调函数方法
- 	路由方法参考框架：fasthttprouter,iris
 	@author : hyperion
 	@since  : 2016-12-05
 	@version: 1.0.1
@@ -106,7 +105,7 @@ func (router *Router) Listen(addr string) {
 
 	s.FastServer = &fasthttp.Server{
 		Handler: s.RouterHandler,
-		Name:    "github.com/aresgo server",
+		Name:    "aresgo server",
 	}
 	//控制台输出服务器信息
 	timeNow := time.Now()
