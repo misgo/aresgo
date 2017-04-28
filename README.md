@@ -22,11 +22,11 @@ aresgo是一个简单快速开发go应用的高性能框架，你可以用她来
 -------------------
 使用aresgo框架，你只需要在源文件都加上：
 
-> import "github.com/aresgo"
+> import "github.com/misgo/aresgo"
 
 或者如果使用框架中的某个包的方法，可以这样使用：
 
-> import "github.com/aresgo/text"
+> import "github.com/misgo/aresgo/text"
 
 > **更多实例参见：[aresgo-demo](https://github.com/misgo/aresgo-demo)**
 
@@ -34,7 +34,7 @@ http实现
 ---------------
 ```go
 
-import "github.com/aresgo"
+import "github.com/misgo/aresgo"
 
 func main(){
 
@@ -80,7 +80,7 @@ func Hello(ctx *aresgo.Context) {
 mysql实现
 ----------------
 导入aresgo框架
->import "github.com/aresgo"
+>import "github.com/misgo/aresgo"
 
 需要指定数据库配置的路径：
 >aresgo.DbConfigPath = [你的数据库配置文件路径] 
@@ -173,7 +173,7 @@ res, err:= aresgo.D("dev").Table("t_user").Where("Uid = ? ", 1).Update(fields)
 redis实现
 --------------
 导入aresgo框架
->import "github.com/aresgo"
+>import "github.com/misgo/aresgo"
 
 需要指定redis配置的路径：
 >aresgo.RedisConfigPath = [你的redis配置文件路径] 
@@ -242,8 +242,8 @@ t1 :=aresgo.R("dev").SetTimeout("a", 60)
 导入配置文件包
 ```go
 import(
-    "github.com/aresgo"
-    "github.com/aresgo/config"
+    "github.com/misgo/aresgo"
+    "github.com/misgo/aresgo/config"
 )
 ```
 

@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aresgo/cache"
-	"github.com/aresgo/config"
-	"github.com/aresgo/data"
+	"github.com/misgo/aresgo/cache"
+	"github.com/misgo/aresgo/config"
+	"github.com/misgo/aresgo/data"
 )
 
 //常量定义

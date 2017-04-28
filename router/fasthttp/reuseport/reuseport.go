@@ -5,11 +5,11 @@
 // SO_REUSEPORT allows linear scaling server performance on multi-CPU servers.
 // See https://www.nginx.com/blog/socket-sharding-nginx-release-1-9-1/ for more details :)
 //
-// The package is based on https://github.com/aresgo/router/kavu/go_reuseport .
+// The package is based on https://github.com/misgo/aresgo/router/kavu/go_reuseport .
 package reuseport
 
 import (
-	"github.com/aresgo/router/tcplisten"
+	"github.com/misgo/aresgo/router/tcplisten"
 	"fmt"
 	"net"
 	"strings"
@@ -35,7 +35,7 @@ func (e *ErrNoReusePort) Error() string {
 //
 // - TCP_FASTOPEN. See https://lwn.net/Articles/508865/ for details.
 //
-// Use https://github.com/aresgo/router/tcplisten if you want customizing
+// Use https://github.com/misgo/aresgo/router/tcplisten if you want customizing
 // these options.
 //
 // Only tcp4 and tcp6 networks are supported.

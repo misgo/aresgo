@@ -15,8 +15,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aresgo/router/fasthttp"
-	"github.com/aresgo/text"
+	"github.com/misgo/aresgo/router/fasthttp"
+	"github.com/misgo/aresgo/text"
 )
 
 const (

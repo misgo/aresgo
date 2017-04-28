@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aresgo/router/fasthttp"
+	"github.com/misgo/aresgo/router/fasthttp"
 )
 
 func TestExpvarHandlerBasic(t *testing.T) {

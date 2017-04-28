@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aresgo/router/klauspost/compress/flate"
+	"github.com/misgo/aresgo/router/klauspost/compress/flate"
 )
 
 type gunzipTest struct {

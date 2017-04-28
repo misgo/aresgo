@@ -141,7 +141,7 @@ func TestInvalidVarint(t *testing.T) {
 		"invalid varint, value overflows uint64",
 		"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00",
 	}, {
-		// https://github.com/aresgo/router/google/snappy/blob/master/format_description.txt
+		// https://github.com/misgo/aresgo/router/google/snappy/blob/master/format_description.txt
 		// says that "the stream starts with the uncompressed length [as a
 		// varint] (up to a maximum of 2^32 - 1)".
 		"valid varint (as uint64), but value overflows uint32",
@@ -638,7 +638,7 @@ func TestSameEncodingAsCppLongFiles(t *testing.T) {
 	if failed {
 		t.Errorf("was the snappytool program built against the C++ snappy library version " +
 			"d53de187 or later, commited on 2016-04-05? See " +
-			"https://github.com/aresgo/router/google/snappy/commit/d53de18799418e113e44444252a39b12a0e4e0cc")
+			"https://github.com/misgo/aresgo/router/google/snappy/commit/d53de18799418e113e44444252a39b12a0e4e0cc")
 	}
 }
 
@@ -981,7 +981,7 @@ func TestReaderUncompressedDataNoPayload(t *testing.T) {
 }
 
 func TestReaderUncompressedDataTooLong(t *testing.T) {
-	// https://github.com/aresgo/router/google/snappy/blob/master/framing_format.txt section
+	// https://github.com/misgo/aresgo/router/google/snappy/blob/master/framing_format.txt section
 	// 4.3 says that "the maximum legal chunk length... is 65540", or 0x10004.
 	const n = 0x10005
 

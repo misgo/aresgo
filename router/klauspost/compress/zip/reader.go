@@ -13,7 +13,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/aresgo/router/klauspost/crc32"
+	"github.com/misgo/aresgo/router/klauspost/crc32"
 )
 
 var (

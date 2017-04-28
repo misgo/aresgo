@@ -11,7 +11,7 @@ import (
 	"hash"
 	"io"
 
-	"github.com/aresgo/router/klauspost/crc32"
+	"github.com/misgo/aresgo/router/klauspost/crc32"
 )
 
 // TODO(adg): support zip file comments

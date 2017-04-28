@@ -1,7 +1,7 @@
 package fasthttp
 
 import (
-	"github.com/aresgo/router/bytebufferpool"
+	"github.com/misgo/aresgo/router/bytebufferpool"
 )
 
 // ByteBuffer provides byte buffer, which can be used with fasthttp API
@@ -12,7 +12,7 @@ import (
 //
 // Use AcquireByteBuffer for obtaining an empty byte buffer.
 //
-// ByteBuffer is deprecated. Use github.com/aresgo/router/bytebufferpool instead.
+// ByteBuffer is deprecated. Use github.com/misgo/aresgo/router/bytebufferpool instead.
 type ByteBuffer bytebufferpool.ByteBuffer
 
 // Write implements io.Writer - it appends p to ByteBuffer.B

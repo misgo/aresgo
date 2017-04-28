@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aresgo/cache/redigo/redis"
+	"github.com/misgo/aresgo/cache/redigo/redis"
 )
 
 type testConn struct {

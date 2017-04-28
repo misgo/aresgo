@@ -216,7 +216,7 @@ type Client struct {
 	//
 	// Disabled header names' normalization may be useful only for proxying
 	// responses to other clients expecting case-sensitive
-	// header names. See https://github.com/aresgo/router/fasthttp/issues/57
+	// header names. See https://github.com/misgo/aresgo/router/fasthttp/issues/57
 	// for details.
 	//
 	// By default request and response header names are normalized, i.e.
@@ -556,7 +556,7 @@ type HostClient struct {
 	//
 	// Disabled header names' normalization may be useful only for proxying
 	// responses to other clients expecting case-sensitive
-	// header names. See https://github.com/aresgo/router/fasthttp/issues/57
+	// header names. See https://github.com/misgo/aresgo/router/fasthttp/issues/57
 	// for details.
 	//
 	// By default request and response header names are normalized, i.e.
@@ -1056,7 +1056,7 @@ func (c *HostClient) doNonNilReqResp(req *Request, resp *Response) (bool, error)
 	if c.WriteTimeout > 0 {
 		// Optimization: update write deadline only if more than 25%
 		// of the last write deadline exceeded.
-		// See https://github.com/aresgo/router/golang/go/issues/15133 for details.
+		// See https://github.com/misgo/aresgo/router/golang/go/issues/15133 for details.
 		currentTime := time.Now()
 		if currentTime.Sub(cc.lastWriteDeadlineTime) > (c.WriteTimeout >> 2) {
 			if err = conn.SetWriteDeadline(currentTime.Add(c.WriteTimeout)); err != nil {
@@ -1100,7 +1100,7 @@ func (c *HostClient) doNonNilReqResp(req *Request, resp *Response) (bool, error)
 	if c.ReadTimeout > 0 {
 		// Optimization: update read deadline only if more than 25%
 		// of the last read deadline exceeded.
-		// See https://github.com/aresgo/router/golang/go/issues/15133 for details.
+		// See https://github.com/misgo/aresgo/router/golang/go/issues/15133 for details.
 		currentTime := time.Now()
 		if currentTime.Sub(cc.lastReadDeadlineTime) > (c.ReadTimeout >> 2) {
 			if err = conn.SetReadDeadline(currentTime.Add(c.ReadTimeout)); err != nil {
@@ -1987,7 +1987,7 @@ func (c *pipelineConnClient) writer(conn net.Conn, stopCh <-chan struct{}) error
 		if writeTimeout > 0 {
 			// Optimization: update write deadline only if more than 25%
 			// of the last write deadline exceeded.
-			// See https://github.com/aresgo/router/golang/go/issues/15133 for details.
+			// See https://github.com/misgo/aresgo/router/golang/go/issues/15133 for details.
 			currentTime := time.Now()
 			if currentTime.Sub(lastWriteDeadlineTime) > (writeTimeout >> 2) {
 				if err = conn.SetWriteDeadline(currentTime.Add(writeTimeout)); err != nil {
@@ -2068,7 +2068,7 @@ func (c *pipelineConnClient) reader(conn net.Conn, stopCh <-chan struct{}) error
 		if readTimeout > 0 {
 			// Optimization: update read deadline only if more than 25%
 			// of the last read deadline exceeded.
-			// See https://github.com/aresgo/router/golang/go/issues/15133 for details.
+			// See https://github.com/misgo/aresgo/router/golang/go/issues/15133 for details.
 			currentTime := time.Now()
 			if currentTime.Sub(lastReadDeadlineTime) > (readTimeout >> 2) {
 				if err = conn.SetReadDeadline(currentTime.Add(readTimeout)); err != nil {

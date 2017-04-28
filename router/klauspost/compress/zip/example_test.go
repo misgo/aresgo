@@ -11,8 +11,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/aresgo/router/klauspost/compress/flate"
-	"github.com/aresgo/router/klauspost/compress/zip"
+	"github.com/misgo/aresgo/router/klauspost/compress/flate"
+	"github.com/misgo/aresgo/router/klauspost/compress/zip"
 )
 
 func ExampleWriter() {

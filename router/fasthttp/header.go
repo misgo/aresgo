@@ -1256,7 +1256,7 @@ func (h *ResponseHeader) tryRead(r *bufio.Reader, n int) error {
 			return io.EOF
 		}
 
-		// This is for go 1.6 bug. See https://github.com/aresgo/router/golang/go/issues/14121 .
+		// This is for go 1.6 bug. See https://github.com/misgo/aresgo/router/golang/go/issues/14121 .
 		if err == bufio.ErrBufferFull {
 			return &ErrSmallBuffer{
 				error: fmt.Errorf("error when reading response headers: %s", errSmallBuffer),
@@ -1327,7 +1327,7 @@ func (h *RequestHeader) tryRead(r *bufio.Reader, n int) error {
 			return io.EOF
 		}
 
-		// This is for go 1.6 bug. See https://github.com/aresgo/router/golang/go/issues/14121 .
+		// This is for go 1.6 bug. See https://github.com/misgo/aresgo/router/golang/go/issues/14121 .
 		if err == bufio.ErrBufferFull {
 			return &ErrSmallBuffer{
 				error: fmt.Errorf("error when reading request headers: %s", errSmallBuffer),
@@ -1431,7 +1431,7 @@ func (h *ResponseHeader) AppendBytes(dst []byte) []byte {
 
 	// Append Content-Type only for non-zero responses
 	// or if it is explicitly set.
-	// See https://github.com/aresgo/router/fasthttp/issues/28 .
+	// See https://github.com/misgo/aresgo/router/fasthttp/issues/28 .
 	if h.ContentLength() != 0 || len(h.contentType) > 0 {
 		dst = appendHeaderLine(dst, strContentType, h.ContentType())
 	}

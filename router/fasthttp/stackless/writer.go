@@ -1,7 +1,7 @@
 package stackless
 
 import (
-	"github.com/aresgo/router/bytebufferpool"
+	"github.com/misgo/aresgo/router/bytebufferpool"
 	"fmt"
 	"io"
 	"runtime"

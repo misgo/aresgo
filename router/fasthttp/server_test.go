@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aresgo/router/fasthttp/fasthttputil"
+	"github.com/misgo/aresgo/router/fasthttp/fasthttputil"
 )
 
 func TestServerErrSmallBuffer(t *testing.T) {

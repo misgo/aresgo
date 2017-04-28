@@ -107,7 +107,7 @@ func main() {
 		s = s[ind:]
 		s = "// Generated, DO NOT EDIT,\n" +
 			"// but copy it to your own project and rename the package.\n" +
-			"// See more at http://github.com/aresgo/router/klauspost/cpuid\n" +
+			"// See more at http://github.com/misgo/aresgo/router/klauspost/cpuid\n" +
 			s
 
 		outputName := Package + string(os.PathSeparator) + file

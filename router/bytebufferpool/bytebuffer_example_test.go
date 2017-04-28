@@ -3,7 +3,7 @@ package bytebufferpool_test
 import (
 	"fmt"
 
-	"github.com/aresgo/router/bytebufferpool"
+	"github.com/misgo/aresgo/router/bytebufferpool"
 )
 
 func ExampleByteBuffer() {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/aresgo/router/fasthttp"
+	"github.com/misgo/aresgo/router/fasthttp"
 )
 
 func ExampleLBClient() {
