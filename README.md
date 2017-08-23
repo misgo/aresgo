@@ -235,7 +235,7 @@ hg1 :=aresgo.R("dev").GetString("h1", "v1")
 ```go
 t1 :=aresgo.R("dev").SetTimeout("a", 60)
 ```
->更多redis实现的例子参见[aresgo-demo/Redis.go](https://github.com/misgo/aresgo-demo/blob/master/Redis.go)
+> 更多redis实现的例子参见[aresgo-demo/Redis.go](https://github.com/misgo/aresgo-demo/blob/master/Redis.go)
 
 配置文件操作
 -------------
@@ -311,5 +311,7 @@ obj, err := jsonConfiger.GetVal("dev.master")
 ```go
 obj, err:= iniConfiger.GetSection("dev.master") 
 
->更多redis实现的例子参见[aresgo-demo/Config.go](https://github.com/misgo/aresgo-demo/blob/master/Config.go)
+> 更多redis实现的例子参见[aresgo-demo/Config.go](https://github.com/misgo/aresgo-demo/blob/master/Config.go)
+
+其他操作
 
