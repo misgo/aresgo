@@ -7,10 +7,12 @@
 package aresgo
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -40,6 +42,8 @@ type (
 	//http上下文
 	Context struct {
 		*fasthttp.RequestCtx
+		AllowCrossDomain bool
+		CrossOrigin      string
 	}
 	HandlerFunc func(*Context) //路由分发函数
 	//路由器
@@ -419,6 +423,74 @@ func (r *Router) ServeFiles(path string, rootPath string) {
 	})
 }
 
+//----上下文处理方法---------start------
+//输出Json数据
+func (ctx *Context) ToJson(datas interface{}, msg ...string) {
+	//设置response头
+	if ctx.AllowCrossDomain && ctx.CrossOrigin != "" {
+		ctx.Response.Header.Set("Access-Control-Allow-Origin", ctx.CrossOrigin)
+	} else {
+		ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+	}
+	ctx.Response.Header.Add("Accept-Encoding", "gzip")
+	ctx.Response.Header.Add("Access-Control-Allow-Headers", "Content-Type")
+	ctx.Response.Header.Add("Time", fmt.Sprintf("%d", time.Now().Unix()))
+	ctx.Response.Header.Set("Content-Type", "application/json")
+	//处理Json数据
+	var res map[string]interface{} = make(map[string]interface{})
+	var code int16 = 200
+	var message string = ""
+	msglen := len(msg)
+
+	//处理返回的状态码及提示信息
+	if msglen > 0 {
+		codePara, err := strconv.ParseInt(msg[0], 10, 16) //将返回的状态码转为int16型
+		if err != nil {
+			code = 500
+			message = fmt.Sprintf("json状态码节点[code=%s]有误，必须为10000以内的整数！", msg[0])
+		} else {
+			code = int16(codePara)
+			if msglen > 1 {
+				message = msg[1]
+			}
+		}
+	}
+	res["code"] = code
+	res["message"] = message
+	res["data"] = datas
+
+	ret, err := json.Marshal(res)
+	if err != nil {
+		res["code"] = 500
+		res["message"] = "生成的数据转换json时出错！"
+		res["data"] = ""
+		ret, _ = json.Marshal(res)
+	}
+	//编码及输出
+	encoding := string(ctx.Request.Header.Peek("Content-Encoding"))
+	if encoding == "gzip" { //gzip方式输出数据
+		_, err := fasthttp.WriteGzip(ctx.Response.BodyWriter(), ret)
+		if err != nil {
+			res["code"] = 500
+			res["message"] = "gzip压缩出错！"
+			res["data"] = ""
+			ctx.Response.SetBodyString(string(ret))
+		}
+	} else {
+		ctx.Response.SetBodyString(string(ret))
+	}
+
+}
+
+//输出Html数据
+func (ctx *Context) ToHtml(datas interface{}) {
+	ctx.Response.Header.Set("Content-Type", "text/html; charset=utf-8")
+	ctx.Response.Header.Add("Time", fmt.Sprintf("%d", time.Now().Unix()))
+	fmt.Fprint(ctx, datas)
+}
+
+//----上下文处理方法----------end------
+
 //------------------path--------------------
 
 //清除不规范路径
@@ -536,10 +608,10 @@ func bufApp(buf *[]byte, s string, w int, c byte) {
 
 //获取服务器及客户端相关信息
 func ServerClientInfo(ctx *Context) {
-
 	reqTime := time.Now().Format("2006-01-02 15:04:05")
-
-	info := fmt.Sprintf("@CONNID:%d--->clintip:%s;path:%s;method:%s;reqnum:%d;agent:%s;time:%s;",
-		ctx.ConnID(), ctx.RemoteIP(), ctx.Path(), ctx.Method(), ctx.ConnRequestNum(), ctx.UserAgent(), reqTime)
+	postParams := ctx.PostArgs().String()
+	info := fmt.Sprintf("@CONNID:%d--->clintip:%s;path:%s;method:%s;reqnum:%d;agent:%s;time:%s;queryparas:%s;postparas:%s",
+		ctx.ConnID(), ctx.RemoteIP(), ctx.Path(), ctx.Method(), ctx.ConnRequestNum(), ctx.UserAgent(), reqTime,
+		ctx.QueryArgs().QueryString(), postParams)
 	fmt.Println(info)
 }
