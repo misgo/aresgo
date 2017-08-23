@@ -44,6 +44,11 @@ type (
 		*fasthttp.RequestCtx
 		AllowCrossDomain bool
 		CrossOrigin      string
+		Cookie           *Cookie
+	}
+
+	Cookie struct {
+		*fasthttp.Cookie
 	}
 	HandlerFunc func(*Context) //路由分发函数
 	//路由器
@@ -98,6 +103,7 @@ func (router *Router) Listen(addr string) {
 	s.contextPool.New = func() interface{} {
 		return &Context{}
 	}
+
 	if s.RouterHandler == nil {
 		defaultHandler := func(reqCtx *fasthttp.RequestCtx) {
 			ctx := s.AcquireCtx(reqCtx)
@@ -435,7 +441,8 @@ func (ctx *Context) ToJson(datas interface{}, msg ...string) {
 	ctx.Response.Header.Add("Accept-Encoding", "gzip")
 	ctx.Response.Header.Add("Access-Control-Allow-Headers", "Content-Type")
 	ctx.Response.Header.Add("Time", fmt.Sprintf("%d", time.Now().Unix()))
-	ctx.Response.Header.Set("Content-Type", "application/json")
+	ctx.SetContentType("application/json; charset=utf-8")
+
 	//处理Json数据
 	var res map[string]interface{} = make(map[string]interface{})
 	var code int16 = 200
@@ -466,6 +473,7 @@ func (ctx *Context) ToJson(datas interface{}, msg ...string) {
 		res["data"] = ""
 		ret, _ = json.Marshal(res)
 	}
+
 	//编码及输出
 	encoding := string(ctx.Request.Header.Peek("Content-Encoding"))
 	if encoding == "gzip" { //gzip方式输出数据
@@ -479,17 +487,33 @@ func (ctx *Context) ToJson(datas interface{}, msg ...string) {
 	} else {
 		ctx.Response.SetBodyString(string(ret))
 	}
-
 }
 
 //输出Html数据
 func (ctx *Context) ToHtml(datas interface{}) {
-	ctx.Response.Header.Set("Content-Type", "text/html; charset=utf-8")
+	ctx.SetContentType("text/html; charset=utf-8")
 	ctx.Response.Header.Add("Time", fmt.Sprintf("%d", time.Now().Unix()))
 	fmt.Fprint(ctx, datas)
 }
 
 //----上下文处理方法----------end------
+
+//-----Cookie & Session -----start------
+//设置Cookie
+func (ctx *Context) SetCookie(key string, val string) {
+	c := &fasthttp.Cookie{}
+	c.SetKey(key)
+	c.SetValue(val)
+	ctx.Response.Header.SetCookie(c)
+
+}
+
+//获取Cookie
+func (ctx *Context) GetCookie(key string) []byte {
+	return ctx.Request.Header.Cookie(key)
+}
+
+//-----Cookie & Session ------end-------
 
 //------------------path--------------------
 

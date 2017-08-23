@@ -89,7 +89,7 @@ func FirstCharToUpperBytes(strByte []byte) []byte {
 }
 
 /*
-  根据开始和结束字符来截取字符串（截取开始于结束字符中间的部分，不包括开始于结束字符）
+  根据开始和结束字符来截取字符串（截取开始与结束字符中间的部分，不包括开始与结束字符）
   @param strByte 待处理的字节数组
   @param startChar 截取的开始字符组
   @param endChar 截取的结束字符组(不包含结束字符)

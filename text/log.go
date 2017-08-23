@@ -24,7 +24,7 @@ type (
 	}
 )
 
-//将字符串进行Md5加密
+//添加log日志
 func (l *Log) Add(content string, logtype int) error {
 	var infoTag = "[INFO]"
 	if logtype == 1 {
