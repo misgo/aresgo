@@ -1,7 +1,7 @@
 /*
 	验证库
 	@author : hyperion
-	@since  : 2017-3-20
+	@since  : 2018-3-13
 	@version: 1.0
 */
 package Text
@@ -15,12 +15,7 @@ type Error struct {
 	Value           interface{}
 }
 
-//判断当前路径的文件是否存在
-func IsExists(path string) bool {
-	_, err := os.Stat(path)
-	if err != nil {
-		return false
-	} else {
-		return true
-	}
+type Validation struct {
+	Errors    []*Error
+	ErrorsMap map[string]*Error
 }
