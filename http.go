@@ -9,6 +9,7 @@ package aresgo
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net"
 	"reflect"
@@ -44,13 +45,11 @@ type (
 		*fasthttp.RequestCtx
 		AllowCrossDomain bool
 		CrossOrigin      string
-		Cookie           *Cookie
 	}
 
-	Cookie struct {
-		*fasthttp.Cookie
-	}
-	HandlerFunc func(*Context) //路由分发函数
+	HandlerFunc func(*Context)      //路由分发函数
+	HttpModule  func(*Context) bool //http拦截器
+
 	//路由器
 	Router struct {
 		trees  map[string]*node //路由表
@@ -58,6 +57,7 @@ type (
 		//		ActionList       map[string]*Controller
 		NotFound         HandlerFunc //未找到路由函数(404错误页执行方法)
 		MethodNotAllowed HandlerFunc //不允许使用指定的方法。比如：未注册路由POST访问地址/user/login，那么通过POST请求时会报此方法的回调函数
+		HttpModuleDenied HandlerFunc //httpmodule，http拦截器拒绝访问，用来跳转拦截是默认执行操作
 
 		RedirectTrailingSlash  bool //是否支持url末尾反斜杠跳转
 		RedirectFixedPath      bool
@@ -162,7 +162,10 @@ func (r *Router) autoroute(ctx *Context) {
 	if sv, ok := r.rvList[pathKey]; ok { //有路由对象
 		_, bol := sv.Type().MethodByName(action)
 		if !bol {
-			r.NotFound(ctx)
+			if r.NotFound != nil { //404错误执行NotFound回调
+				r.NotFound(ctx)
+			}
+
 		} else {
 			args := make([]reflect.Value, 1)
 			args[0] = reflect.ValueOf(ctx)
@@ -170,7 +173,9 @@ func (r *Router) autoroute(ctx *Context) {
 		}
 
 	} else {
-		r.NotFound(ctx)
+		if r.NotFound != nil { //404错误执行NotFound回调
+			r.NotFound(ctx)
+		}
 	}
 }
 
@@ -201,42 +206,52 @@ func (r *Router) Register(path string, s interface{}, actions ...string) {
 }
 
 // 路由处理句柄---Get方式
-func (r *Router) Get(path string, handle HandlerFunc) {
-	r.Handle(ActionGet, path, handle)
+func (r *Router) Get(path string, handle HandlerFunc, httpmod ...HttpModule) {
+	if len(httpmod) >= 1 {
+		r.Handle(ActionGet, path, handle, httpmod[0])
+	} else {
+		r.Handle(ActionGet, path, handle, nil)
+	}
+
 }
 
 // 路由处理句柄---Head方式
 func (r *Router) Head(path string, handle HandlerFunc) {
-	r.Handle(ActionHead, path, handle)
+	r.Handle(ActionHead, path, handle, nil)
 }
 
 // 路由处理句柄---Options方式
 func (r *Router) Options(path string, handle HandlerFunc) {
-	r.Handle(ActionOptions, path, handle)
+	r.Handle(ActionOptions, path, handle, nil)
 }
 
 // 路由处理句柄---Post方式
-func (r *Router) Post(path string, handle HandlerFunc) {
-	r.Handle(ActionPost, path, handle)
+func (r *Router) Post(path string, handle HandlerFunc, httpmod ...HttpModule) {
+	if len(httpmod) >= 1 {
+		r.Handle(ActionPost, path, handle, httpmod[0])
+	} else {
+		r.Handle(ActionPost, path, handle, nil)
+	}
+
 }
 
 // 路由处理句柄---Put方式
 func (r *Router) Put(path string, handle HandlerFunc) {
-	r.Handle(ActionPut, path, handle)
+	r.Handle(ActionPut, path, handle, nil)
 }
 
 // 路由处理句柄---Patch方式
 func (r *Router) Patch(path string, handle HandlerFunc) {
-	r.Handle(ActionPatch, path, handle)
+	r.Handle(ActionPatch, path, handle, nil)
 }
 
 // 路由处理句柄---Delete方式
 func (r *Router) Delete(path string, handle HandlerFunc) {
-	r.Handle(ActionDelete, path, handle)
+	r.Handle(ActionDelete, path, handle, nil)
 }
 
-//路由统一处理句柄
-func (r *Router) Handle(method string, path string, handle HandlerFunc) {
+//路由统一处理句柄，根据配置的路径将路径与回调函数添加到路由注册表中
+func (r *Router) Handle(method string, path string, handle HandlerFunc, httpmod HttpModule) {
 	if path[0] != '/' {
 		panic("路由路径[" + path + "]必须以 '/' 开头")
 	}
@@ -251,7 +266,7 @@ func (r *Router) Handle(method string, path string, handle HandlerFunc) {
 		r.trees[method] = root
 	}
 
-	root.addRoute(path, handle)
+	root.addRoute(path, handle, httpmod)
 
 }
 
@@ -267,11 +282,11 @@ func (r *Router) recv(ctx *Context) {
 
 //手动查找方法+路径组合
 //如果路径能找到，会返回方法和路径参数值
-func (r *Router) Lookup(method, path string, ctx *Context) (HandlerFunc, bool) {
+func (r *Router) Lookup(method, path string, ctx *Context) (HandlerFunc, HttpModule, bool) {
 	if root := r.trees[method]; root != nil {
 		return root.getValue(path, ctx)
 	}
-	return nil, false
+	return nil, nil, false
 }
 
 func (r *Router) allowed(path, reqMethod string) (allow string) {
@@ -295,7 +310,7 @@ func (r *Router) allowed(path, reqMethod string) (allow string) {
 				continue
 			}
 
-			handle, _ := r.trees[method].getValue(path, nil)
+			handle, _, _ := r.trees[method].getValue(path, nil)
 			if handle != nil {
 				//添加方法到许可的方法列表里
 				if len(allow) == 0 {
@@ -332,8 +347,20 @@ func (r *Router) Handler(ctx *Context) {
 
 	//回调函数执行
 	if root := r.trees[method]; root != nil {
-		if f, tsr := root.getValue(path, ctx); f != nil {
-			f(ctx) //如果回调函数存在，则将RequestCtx传入并执行
+		if f, h, tsr := root.getValue(path, ctx); f != nil {
+			var b bool = true
+			//http拦截器
+			if h != nil {
+				b = h(ctx)
+			}
+			if b {
+				f(ctx) //如果回调函数存在，则将RequestCtx传入并执行
+			} else {
+				if r.HttpModuleDenied != nil {
+					r.HttpModuleDenied(ctx) //拒绝访问默认方法
+				}
+			}
+
 			return
 		} else if method != ActionConn && path != "/" {
 			code := 301 // 永久重定向
@@ -408,17 +435,15 @@ func (r *Router) Handler(ctx *Context) {
 	}
 }
 
+//ServerFiles方式提供一种方式用来访问静态资源，如包含页面的管理系统中涉及的CSS、Javascritp、图片等静态资源
 // ServeFiles serves files from the given file system root.
-// The path must end with "/*filepath", files are then served from the local
-// path /defined/root/dir/*filepath.
-// For example if root is "/etc" and *filepath is "passwd", the local file
-// "/etc/passwd" would be served.
-// Internally a http.FileServer is used, therefore http.NotFound is used instead
-// of the Router's NotFound handler.
-//     router.ServeFiles("/src/*filepath", "/var/www")
+//路径设计必须用这种形式：/XXX/*filepath(必须以/*filepath为结尾标识)，还必须有文件目录的绝对地址路径
+//如静态文件路径存放在目录/var/www/static中，访问是想通过这种形式访问：http://www.XXX.com/static/XXX.js
+//可以这样设置：r.ServerFiles("/static/*filepath","/var/www/static")
+//通过这种方式可以创建一个纯静态的文件服务器，或者搭建一个包含模板静态资源的应用
 func (r *Router) ServeFiles(path string, rootPath string) {
 	if len(path) < 10 || path[len(path)-10:] != "/*filepath" {
-		panic("path must end with /*filepath in path '" + path + "'")
+		panic("路径必须以/*filepath结尾 '" + path + "'")
 	}
 	prefix := path[:len(path)-10]
 
@@ -490,10 +515,24 @@ func (ctx *Context) ToJson(datas interface{}, msg ...string) {
 }
 
 //输出Html数据
-func (ctx *Context) ToHtml(datas interface{}) {
+func (ctx *Context) ToHtml(datas interface{}, path ...string) {
 	ctx.SetContentType("text/html; charset=utf-8")
 	ctx.Response.Header.Add("Time", fmt.Sprintf("%d", time.Now().Unix()))
-	fmt.Fprint(ctx, datas)
+	if len(path) > 0 { //模板方式输出
+		t, err := template.ParseFiles(path[0])
+		if err != nil {
+			fmt.Println("[ERROR] ", err.Error())
+			return
+		}
+		t = template.Must(t, err)
+		err = t.Execute(ctx, datas)
+		if err != nil {
+			fmt.Println("[ERROR] ", err.Error())
+			return
+		}
+	} else { //字符串方式输出
+		fmt.Fprint(ctx, datas)
+	}
 }
 
 //----上下文处理方法----------end------
@@ -634,8 +673,7 @@ func bufApp(buf *[]byte, s string, w int, c byte) {
 func ServerClientInfo(ctx *Context) {
 	reqTime := time.Now().Format("2006-01-02 15:04:05")
 	postParams := ctx.PostArgs().String()
-	info := fmt.Sprintf("@CONNID:%d--->clintip:%s;path:%s;method:%s;reqnum:%d;agent:%s;time:%s;queryparas:%s;postparas:%s",
-		ctx.ConnID(), ctx.RemoteIP(), ctx.Path(), ctx.Method(), ctx.ConnRequestNum(), ctx.UserAgent(), reqTime,
-		ctx.QueryArgs().QueryString(), postParams)
+	info := fmt.Sprintf("[ID:%d][%s] %s \"%s %d\" %s\r\n agent:%s;query:%s;post:%s; ",
+		ctx.ConnID(), reqTime, ctx.RemoteIP(), ctx.Method(), ctx.Response.StatusCode(), ctx.Path(), ctx.UserAgent(), ctx.QueryArgs().QueryString(), postParams)
 	fmt.Println(info)
 }
