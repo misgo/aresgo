@@ -47,6 +47,7 @@ type node struct {
 	indices   string
 	children  []*node
 	handle    HandlerFunc
+	httpmod   HttpModule
 	priority  uint32
 }
 
@@ -78,7 +79,7 @@ func (n *node) incrementChildPrio(pos int) int {
 
 // addRoute adds a node with the given handle to the path.
 // Not concurrency-safe!
-func (n *node) addRoute(path string, handle HandlerFunc) {
+func (n *node) addRoute(path string, handle HandlerFunc, httpmod HttpModule) {
 	fullPath := path
 	n.priority++
 	numParams := countParams(path)
@@ -109,6 +110,7 @@ func (n *node) addRoute(path string, handle HandlerFunc) {
 					indices:   n.indices,
 					children:  n.children,
 					handle:    n.handle,
+					httpmod:   n.httpmod,
 					priority:  n.priority - 1,
 				}
 
@@ -124,6 +126,7 @@ func (n *node) addRoute(path string, handle HandlerFunc) {
 				n.indices = string([]byte{n.path[i]})
 				n.path = path[:i]
 				n.handle = nil
+				n.httpmod = nil
 				n.wildChild = false
 			}
 
@@ -187,7 +190,7 @@ func (n *node) addRoute(path string, handle HandlerFunc) {
 					n.incrementChildPrio(len(n.indices) - 1)
 					n = child
 				}
-				n.insertChild(numParams, path, fullPath, handle)
+				n.insertChild(numParams, path, fullPath, handle, httpmod)
 				return
 
 			} else if i == len(path) { // Make node a (in-path) leaf
@@ -195,16 +198,17 @@ func (n *node) addRoute(path string, handle HandlerFunc) {
 					panic("a handle is already registered for path '" + fullPath + "'")
 				}
 				n.handle = handle
+				n.httpmod = httpmod
 			}
 			return
 		}
 	} else { // Empty tree
-		n.insertChild(numParams, path, fullPath, handle)
+		n.insertChild(numParams, path, fullPath, handle, httpmod)
 		n.nType = root
 	}
 }
 
-func (n *node) insertChild(numParams uint8, path, fullPath string, handle HandlerFunc) {
+func (n *node) insertChild(numParams uint8, path, fullPath string, handle HandlerFunc, httpmod HttpModule) {
 	var offset int // already handled bytes of the path
 
 	// find prefix until first wildcard (beginning with ':'' or '*'')
@@ -304,6 +308,7 @@ func (n *node) insertChild(numParams uint8, path, fullPath string, handle Handle
 				nType:     catchAll,
 				maxParams: 1,
 				handle:    handle,
+				httpmod:   httpmod,
 				priority:  1,
 			}
 			n.children = []*node{child}
@@ -315,6 +320,7 @@ func (n *node) insertChild(numParams uint8, path, fullPath string, handle Handle
 	// insert remaining path part and handle to the leaf
 	n.path = path[offset:]
 	n.handle = handle
+	n.httpmod = httpmod
 }
 
 // Returns the handle registered with the given path (key). The values of
@@ -322,7 +328,7 @@ func (n *node) insertChild(numParams uint8, path, fullPath string, handle Handle
 // If no handle can be found, a TSR (trailing slash redirect) recommendation is
 // made if a handle exists with an extra (without the) trailing slash for the
 // given path.
-func (n *node) getValue(path string, ctx *Context) (handle HandlerFunc, tsr bool) {
+func (n *node) getValue(path string, ctx *Context) (handle HandlerFunc, httpmod HttpModule, tsr bool) {
 walk: // outer loop for walking the tree
 	for {
 		if len(path) > len(n.path) {
@@ -377,6 +383,7 @@ walk: // outer loop for walking the tree
 					}
 
 					if handle = n.handle; handle != nil {
+						httpmod = n.httpmod
 						return
 					} else if len(n.children) == 1 {
 						// No handle found. Check if a handle for this path + a
@@ -393,6 +400,7 @@ walk: // outer loop for walking the tree
 						ctx.SetUserValue(n.path[2:], path)
 					}
 					handle = n.handle
+					httpmod = n.httpmod
 					return
 
 				default:
@@ -403,6 +411,7 @@ walk: // outer loop for walking the tree
 			// We should have reached the node containing the handle.
 			// Check if this node has a handle registered.
 			if handle = n.handle; handle != nil {
+				httpmod = n.httpmod //拦截器赋值
 				return
 			}
 
