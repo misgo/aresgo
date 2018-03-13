@@ -55,10 +55,20 @@ func main(){
   //POST or GET or ...请求被拒绝时执行的方法，取决于路由方法的设置
   router.MethodNotAllowed = DisAllowedMethod  
   
+  //默认http拦截器方法，当拦截器方法返回false，且未有指定跳转时执行此方法
+  router.HttpModuleDenied = httpModuleDenied
+  
+  //静态文件目录，提供一种方式用来访问静态资源，如包含页面的管理系统中涉及的CSS、Javascritp、图片等静态资源
+ // 路径设计必须用这种形式：/XXX/*filepath(必须以/*filepath为结尾标识)，还必须有文件目录的绝对地址路径
+ //如静态文件路径存放在目录/var/www/static中，访问是想通过这种形式访问：http://www.XXX.com/static/XXX.js
+ //可以这样设置：r.ServerFiles("/static/*filepath","/var/www/static")
+ 通过这种方式可以创建一个纯静态的文件服务器，或者搭建一个包含模板静态资源的应用
+  router.ServeFiles("/static/*filepath", "/var/www/static")
   //监听IP与端口，阻塞式服务
   router.Listen(“127.0.0.1:8010”)
 
 }
+
 //404错误页
 func NotFound(ctx *aresgo.Context) {
 	fmt.Fprint(ctx, "页面不存在!\n")
@@ -315,4 +325,4 @@ obj, err:= iniConfiger.GetSection("dev.master")
 
 其他操作
 -------------
-
+无
