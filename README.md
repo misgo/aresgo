@@ -62,7 +62,7 @@ func main(){
  // 路径设计必须用这种形式：/XXX/*filepath(必须以/*filepath为结尾标识)，还必须有文件目录的绝对地址路径
  //如静态文件路径存放在目录/var/www/static中，访问是想通过这种形式访问：http://www.XXX.com/static/XXX.js
  //可以这样设置：r.ServerFiles("/static/*filepath","/var/www/static")
- 通过这种方式可以创建一个纯静态的文件服务器，或者搭建一个包含模板静态资源的应用
+ //通过这种方式可以创建一个纯静态的文件服务器，或者搭建一个包含模板静态资源的应用
   router.ServeFiles("/static/*filepath", "/var/www/static")
   //监听IP与端口，阻塞式服务
   router.Listen(“127.0.0.1:8010”)
@@ -320,8 +320,7 @@ obj, err := jsonConfiger.GetVal("dev.master")
 > ini
 ```go
 obj, err:= iniConfiger.GetSection("dev.master") 
-
-> 更多redis实现的例子参见[aresgo-demo/Config.go](https://github.com/misgo/aresgo-demo/blob/master/Config.go)
+> **更多redis实例参见：[[aresgo-demo/Config.go]((https://github.com/misgo/aresgo-demo/blob/master/Config.go)**
 
 其他操作
 -------------
