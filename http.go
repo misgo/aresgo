@@ -55,9 +55,9 @@ type (
 		trees  map[string]*node //路由表
 		rvList map[string]reflect.Value
 		//		ActionList       map[string]*Controller
-		NotFound         HandlerFunc //未找到路由函数(404错误页执行方法)
-		MethodNotAllowed HandlerFunc //不允许使用指定的方法。比如：未注册路由POST访问地址/user/login，那么通过POST请求时会报此方法的回调函数
-		HttpModuleDenied HandlerFunc //httpmodule，http拦截器拒绝访问，用来跳转拦截是默认执行操作
+		NotFound            HandlerFunc //未找到路由函数(404错误页执行方法)
+		MethodNotAllowed    HandlerFunc //不允许使用指定的方法。比如：未注册路由POST访问地址/user/login，那么通过POST请求时会报此方法的回调函数
+		HttpModuleIntercept HandlerFunc //httpmodule，http拦截器拒绝访问，用来跳转拦截是默认执行操作
 
 		RedirectTrailingSlash  bool //是否支持url末尾反斜杠跳转
 		RedirectFixedPath      bool
@@ -181,7 +181,7 @@ func (r *Router) autoroute(ctx *Context) {
 
 //路由处理句柄---注册自动路由
 //示例：router.Register("/Path1/", &struct{}, "GET", "POST")
-func (r *Router) Register(path string, s interface{}, actions ...string) {
+func (r *Router) Register(path string, s interface{}, httpmod HttpModule, actions ...string) {
 	//路径操作
 	pathTrim := strings.TrimRight(path, "/")
 	pathKey := strings.ToUpper(pathTrim)       //自动路由表中对应的struct反射模型的Key
@@ -197,9 +197,9 @@ func (r *Router) Register(path string, s interface{}, actions ...string) {
 	for i := 0; i < len(actions); i++ {
 		action := actions[i]
 		if action == ActionGet { //Get请求
-			r.Get(path, r.autoroute)
+			r.Get(path, r.autoroute, httpmod)
 		} else if action == ActionPost { //Post请求
-			r.Post(path, r.autoroute)
+			r.Post(path, r.autoroute, httpmod)
 		}
 	}
 
@@ -356,8 +356,8 @@ func (r *Router) Handler(ctx *Context) {
 			if b {
 				f(ctx) //如果回调函数存在，则将RequestCtx传入并执行
 			} else {
-				if r.HttpModuleDenied != nil {
-					r.HttpModuleDenied(ctx) //拒绝访问默认方法
+				if r.HttpModuleIntercept != nil {
+					r.HttpModuleIntercept(ctx) //拒绝访问默认方法
 				}
 			}
 
@@ -673,7 +673,7 @@ func bufApp(buf *[]byte, s string, w int, c byte) {
 func ServerClientInfo(ctx *Context) {
 	reqTime := time.Now().Format("2006-01-02 15:04:05")
 	postParams := ctx.PostArgs().String()
-	info := fmt.Sprintf("[ID:%d][%s] %s \"%s %d\" %s\r\n agent:%s;query:%s;post:%s; ",
+	info := fmt.Sprintf("[ID:%d][%s] %s (%s %d) %s  agent:%s;query:%s;post:%s; ",
 		ctx.ConnID(), reqTime, ctx.RemoteIP(), ctx.Method(), ctx.Response.StatusCode(), ctx.Path(), ctx.UserAgent(), ctx.QueryArgs().QueryString(), postParams)
 	fmt.Println(info)
 }
