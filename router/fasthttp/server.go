@@ -357,6 +357,8 @@ func CompressHandlerLevel(h RequestHandler, level int) RequestHandler {
 	}
 }
 
+var FileNotFound func(ctx *RequestCtx)
+
 // RequestCtx contains incoming request and manages outgoing response.
 //
 // It is forbidden copying RequestCtx instances.
