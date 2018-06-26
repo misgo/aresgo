@@ -441,17 +441,27 @@ func (r *Router) Handler(ctx *Context) {
 //如静态文件路径存放在目录/var/www/static中，访问是想通过这种形式访问：http://www.XXX.com/static/XXX.js
 //可以这样设置：r.ServerFiles("/static/*filepath","/var/www/static")
 //通过这种方式可以创建一个纯静态的文件服务器，或者搭建一个包含模板静态资源的应用
-func (r *Router) ServeFiles(path string, rootPath string) {
+func (r *Router) ServeFiles(path string, rootPath string, httpmod ...HttpModule) {
 	if len(path) < 10 || path[len(path)-10:] != "/*filepath" {
 		panic("路径必须以/*filepath结尾 '" + path + "'")
 	}
 	prefix := path[:len(path)-10]
-
 	fileHandler := fasthttp.FSHandler(rootPath, strings.Count(prefix, "/"))
-
+	var hmod HttpModule = nil
+	if len(httpmod) >= 1 {
+		hmod = httpmod[0]
+	}
 	r.Get(path, func(ctx *Context) {
+		fasthttp.FileNotFound = func(fr_ctx *fasthttp.RequestCtx) {
+			ctx.RequestCtx = fr_ctx
+			if r.NotFound != nil {
+				r.NotFound(ctx)
+			} else {
+				fr_ctx.NotFound()
+			}
+		}
 		fileHandler(ctx.RequestCtx)
-	})
+	}, hmod)
 }
 
 //----上下文处理方法---------start------
@@ -515,24 +525,48 @@ func (ctx *Context) ToJson(datas interface{}, msg ...string) {
 }
 
 //输出Html数据
-func (ctx *Context) ToHtml(datas interface{}, path ...string) {
+func (ctx *Context) ToHtml(datas interface{}, pathsKey string, path ...string) {
+	//设置返回信息头
 	ctx.SetContentType("text/html; charset=utf-8")
 	ctx.Response.Header.Add("Time", fmt.Sprintf("%d", time.Now().Unix()))
-	if len(path) > 0 { //模板方式输出
-		t, err := template.ParseFiles(path[0])
+	if pathsKey != "" { //模板解析
+		var tplPathList []string
+		var dataMap map[string]interface{} = make(map[string]interface{})
+		_, tplBasePath := GetAppPath() //获取模板路径
+		if len(path) > 0 {             //加载自定义模板路径
+			for _, v := range path {
+				tplPathList = append(tplPathList, fmt.Sprintf("%s/%s", tplBasePath, v))
+			}
+		}
+		//加载配置的模板路径
+		if pathsKey != "" && TemplatePaths != nil {
+			if _, ok := TemplatePaths[pathsKey]; ok {
+				baseTplPaths := TemplatePaths[pathsKey]
+				for _, v := range baseTplPaths {
+					tplPathList = append(tplPathList, fmt.Sprintf("%s/%s", tplBasePath, v))
+				}
+			}
+		}
+		//构造数据格式
+		dataMap["CustomVar"] = CustomVar
+		dataMap["Output"] = datas
+		//解析模板文件
+		t, err := template.ParseFiles(tplPathList...)
 		if err != nil {
 			fmt.Println("[ERROR] ", err.Error())
 			return
 		}
+
 		t = template.Must(t, err)
-		err = t.Execute(ctx, datas)
+		err = t.Execute(ctx, dataMap)
 		if err != nil {
 			fmt.Println("[ERROR] ", err.Error())
 			return
 		}
-	} else { //字符串方式输出
+	} else { //字符串解析
 		fmt.Fprint(ctx, datas)
 	}
+
 }
 
 //----上下文处理方法----------end------
@@ -672,8 +706,13 @@ func bufApp(buf *[]byte, s string, w int, c byte) {
 //获取服务器及客户端相关信息
 func ServerClientInfo(ctx *Context) {
 	reqTime := time.Now().Format("2006-01-02 15:04:05")
-	postParams := ctx.PostArgs().String()
-	info := fmt.Sprintf("[ID:%d][%s] %s (%s %d) %s  agent:%s;query:%s;post:%s; ",
-		ctx.ConnID(), reqTime, ctx.RemoteIP(), ctx.Method(), ctx.Response.StatusCode(), ctx.Path(), ctx.UserAgent(), ctx.QueryArgs().QueryString(), postParams)
+	var params string = ""
+	if ctx.IsPost() {
+		params = ctx.PostArgs().String()
+	} else if ctx.IsGet() {
+		params = ctx.QueryArgs().String()
+	}
+	info := fmt.Sprintf("[%d][%s] %s (%s %d) -> path:%s;agent:%s;params:%s; ", ctx.ConnID(), reqTime, ctx.RemoteIP(), ctx.Method(), ctx.Response.StatusCode(),
+		ctx.Path(), ctx.UserAgent(), params)
 	fmt.Println(info)
 }
