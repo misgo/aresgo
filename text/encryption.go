@@ -12,7 +12,9 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"io"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -28,6 +30,18 @@ func Md5(plaintext string) string {
 	m := md5.New()
 	m.Write([]byte(plaintext))
 	return hex.EncodeToString(m.Sum(nil))
+}
+
+//构造密码
+func BuildPwd(pwd string, salt string) string {
+	return Md5(SpliceString("go", pwd, "love", salt))
+}
+
+//生成凭证--根据ID和扰码生成唯一Token
+func CreateCert(id int64, salt string) string {
+	nowtime := strconv.FormatInt(time.Now().Unix(), 10)
+	idStr := strconv.FormatInt(id, 10)
+	return Md5(SpliceString(idStr, salt, nowtime))
 }
 
 //获取Guid
