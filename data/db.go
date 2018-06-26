@@ -7,8 +7,6 @@
 package Db
 
 import (
-	_ "github.com/misgo/aresgo/data/mysql"
-	"github.com/misgo/aresgo/text"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -16,6 +14,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	_ "github.com/misgo/aresgo/data/mysql"
+	"github.com/misgo/aresgo/text"
 )
 
 var (
@@ -49,6 +50,8 @@ type (
 		ParamIteration  int
 		FieldMap        map[string]interface{}
 		fieldStructMap  map[string]string
+		EnableTbPre     bool
+		TbPre           string
 	}
 
 	DbSettings struct {
@@ -73,6 +76,8 @@ func NewDb(driver string, config map[string]*DbSettings) *DbModel {
 			"@tcp(", dbWriterConfig.Ip, ":", dbWriterConfig.Port, ")/", dbWriterConfig.DefaultDb,
 			"?charset=", dbWriterConfig.Charset)
 		db.dbWriter = Init(driver, dbWriterConfigStr)
+		db.EnableTbPre = dbWriterConfig.EnableTbPre
+		db.TbPre = dbWriterConfig.TbPre
 		//		fmt.Println(dbWriterConfigStr)
 	} else {
 		errMsg := fmt.Sprintf("无法连接到主数据库[Ip:%s;port:%s]", dbWriterConfig.Ip, dbWriterConfig.Port)
@@ -114,7 +119,12 @@ func (m *DbModel) Ping() error {
 
 //设定数据表名
 func (m *DbModel) Table(tbname string) *DbModel {
-	m.TableName = tbname
+	if m.EnableTbPre {
+		m.TableName = fmt.Sprintf("%s%s", m.TbPre, tbname)
+	} else {
+		m.TableName = tbname
+	}
+
 	return m
 }
 
@@ -312,7 +322,7 @@ func (m *DbModel) Select() (*[]map[string]string, error) {
 		sql.Append(strconv.Itoa(m.RowsNum))
 	}
 	//SQL调试
-	//	fmt.Printf("%s", sql.ToString())
+	//fmt.Printf("%s", sql.ToString())
 	//	ret := make([]map[string]string, 0)
 	//	return &ret, errors.New("debug")
 	return m.Query(sql.ToString(), m.Param...)
@@ -519,7 +529,11 @@ func (m *DbModel) setFieldMap(field reflect.StructField, rv reflect.Value) {
 
 	//如果设置table标签用则采用table的值，如果已经执行过Table方法了，此标签失效
 	if tagTable != "" && m.TableName == "" {
-		m.TableName = tagTable
+		if m.EnableTbPre {
+			m.TableName = fmt.Sprintf("%s%s", m.TbPre, tagTable)
+		} else {
+			m.TableName = tagTable
+		}
 	}
 }
 
@@ -573,8 +587,8 @@ func (m *DbModel) Insert(fieldmap map[string]interface{}) (int64, error) {
 	}
 	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v) %v", m.TableName, strings.Join(fields, ", "), strings.Join(placeholders, ", "), whereStr)
 	//sql调试
-	fmt.Println(sql, "\r\n")
-	fmt.Println(values, "\r\n")
+	//fmt.Println(sql, "\r\n")
+	//fmt.Println(values, "\r\n")
 	//	return -1, nil
 	return m.Execute(MethodInsert, sql, values...)
 }
