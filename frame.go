@@ -47,15 +47,16 @@ type (
 
 //初始化定义
 var (
-	StartTime string
-	//数据库实例
-	DS              *Db.DbModel                  = nil
+	StartTime       string                                                            //程序启动时间
+	DS              *Db.DbModel                  = nil                                //当前数据库对象实例
 	DbModels        map[string]*Db.DbModel       = make(map[string]*Db.DbModel)       //数据库对象列表
 	DbConfigPath    string                       = ""                                 //数据库配置文件路径
 	dbConfiger      config.Configer              = nil                                //数据库配置文件对象
 	RedisModels     map[string]*Cache.RedisModel = make(map[string]*Cache.RedisModel) //Redis对象列表
 	RedisConfigPath string                       = ""                                 //Redis配置文件路径
 	CacheConfigPath string                       = ""                                 //缓存配置文件路径
+	CustomVar       map[string]interface{}                                            //用户自定义全局变量
+	TemplatePaths   map[string][]string                                               //用户自定义页面模板列表
 )
 
 //初始化数据库配置
@@ -69,15 +70,14 @@ func D(dbkey string) *Db.DbModel {
 	if _, ok := DbModels[dbkey]; ok { //能取到数据库对象
 		ds = DbModels[dbkey]
 	}
-
 	if ds == nil { //数据库对象不存在
 		err := getDbModel(dbkey)
 		if err != nil {
-			//			fmt.Printf("%v\r\n", err.Error())
 			return &Db.DbModel{}
 		}
 
 	}
+
 	return DbModels[dbkey]
 }
 
@@ -86,13 +86,13 @@ func getDbModel(dbkey string) error {
 	//如果数据库配置文件未加载，则先加载配置文件
 	if dbConfiger == nil {
 		err := loadDbConfig()
-		//		dbConfiger, err := LoadConfig("json", DbConfigPath)
 		if err != nil {
 			return err
 		}
 	}
 	//设置数据库主从配置，从配置文件中获取
 	var settings map[string]*Db.DbSettings = make(map[string]*Db.DbSettings)
+	//从库配置
 	dbreader := &Db.DbSettings{
 		Ip:        dbConfiger.DefaultString(fmt.Sprintf("%s.slave.ip", dbkey), "127.0.0.1"),
 		Port:      dbConfiger.DefaultString(fmt.Sprintf("%s.slave.port", dbkey), "3306"),
@@ -101,6 +101,8 @@ func getDbModel(dbkey string) error {
 		Charset:   dbConfiger.DefaultString(fmt.Sprintf("%s.slave.charset", dbkey), "utf8"),
 		DefaultDb: dbConfiger.DefaultString(fmt.Sprintf("%s.slave.db", dbkey), ""),
 	}
+
+	//主库配置
 	dbwriter := &Db.DbSettings{
 		Ip:        dbConfiger.DefaultString(fmt.Sprintf("%s.master.ip", dbkey), "127.0.0.1"),
 		Port:      dbConfiger.DefaultString(fmt.Sprintf("%s.master.port", dbkey), "3306"),
@@ -109,8 +111,15 @@ func getDbModel(dbkey string) error {
 		Charset:   dbConfiger.DefaultString(fmt.Sprintf("%s.master.charset", dbkey), "utf8"),
 		DefaultDb: dbConfiger.DefaultString(fmt.Sprintf("%s.master.db", dbkey), ""),
 	}
+	//表前缀只设置主库，主从公用相同的表前缀
+	if dbConfiger.DefaultBool(fmt.Sprintf("%s.enable_tbpre", dbkey), false) {
+		dbwriter.EnableTbPre = true
+		dbwriter.TbPre = dbConfiger.DefaultString(fmt.Sprintf("%s.tbpre", dbkey), "")
+
+	}
 	settings["master"] = dbwriter
 	settings["slave"] = dbreader
+
 	db := Db.NewDb("mysql", settings)
 	DbModels[dbkey] = db
 	return nil
@@ -183,7 +192,7 @@ func getRedisModel(redisKey string) error {
 
 }
 
-//加载数据库配置文件
+//加载配置文件
 func LoadConfig(ctype string, filePath string) (config.Configer, error) {
 	if filePath != "" {
 		conf, err := config.NewConfig(ctype, filePath)
@@ -201,16 +210,18 @@ func LoadConfig(ctype string, filePath string) (config.Configer, error) {
 func GetAppPath() (appPath string, appDir string) {
 	var err error
 	appPath, err = filepath.Abs(os.Args[0])
+
 	if err == nil {
 		appPath = strings.Replace(appPath, "\\", "/", -1)
+		appDir, err = filepath.Abs(filepath.Dir(os.Args[0]))
+		if err == nil {
+			appDir = strings.Replace(appDir, "\\", "/", -1) //将\替换成/
+		} else {
+			appDir = ""
+		}
 	} else {
 		appPath = ""
 	}
-	appDir, err = os.Getwd()
-	if err == nil {
-		appDir = strings.Replace(appDir, "\\", "/", -1)
-	} else {
-		appDir = ""
-	}
+
 	return appPath, appDir
 }
