@@ -12,11 +12,15 @@ import (
 	"os"
 )
 
-var LT_DAY int = 1
-var LT_MONTH int = 2
+var (
+	LogList  map[string]*Logger = nil //Log对象列表
+	LogPath  string             = ""  //日志存放路径
+	LT_DAY   int                = 1
+	LT_MONTH int                = 2
+)
 
 type (
-	Log struct {
+	Logger struct {
 		Dir      string
 		FilePath string
 		Type     int
@@ -24,8 +28,36 @@ type (
 	}
 )
 
-//添加log日志
-func (l *Log) Add(content string, logtype int) error {
+//log日志。最多添加10种类型的日志
+func Log(filename ...string) *Logger {
+	var fname string = "app"
+	if len(filename) > 0 {
+		fname = filename[0]
+	}
+	if LogList == nil {
+		LogList = make(map[string]*Logger, 10)
+	}
+	if _, ok := LogList[fname]; !ok { //不存在日志对象进行实例化
+		log := &Logger{}
+		if LogPath == "" {
+			appDir := GetAppDir()
+			if appDir != "" {
+				log.Dir = SpliceString(appDir, "/log/")
+			} else {
+				log.Dir = "/tmp/log/"
+			}
+		}
+		if !IsExists(log.Dir) { //如果目录不存在，则创建此目录
+			CreateDir(log.Dir)
+		}
+		log.FilePath = SpliceString(log.Dir, fname, ".log")
+		LogList[fname] = log
+	}
+	return LogList[fname]
+}
+
+//添加log日志。logtype-->默认（0）：信息日志；1：警告日志；2：错误日志；3：崩溃日志；4：调试日志；
+func (l *Logger) Add(content string, logtype int) error {
 	var infoTag = "[INFO]"
 	if logtype == 1 {
 		infoTag = "[WARNING]"
@@ -33,6 +65,8 @@ func (l *Log) Add(content string, logtype int) error {
 		infoTag = "[ERROR]"
 	} else if logtype == 3 {
 		infoTag = "[FATAL]"
+	} else if logtype == 4 {
+		infoTag = "[DEBUG]"
 	}
 
 	logFile, logErr := os.OpenFile(l.FilePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
@@ -53,25 +87,31 @@ func (l *Log) Add(content string, logtype int) error {
 }
 
 //普通信息
-func (l *Log) Info(content string) error {
+func (l *Logger) Info(content string) error {
 	l.Flags = 0
 	return l.Add(content, 0)
 }
 
 //警告信息
-func (l *Log) Warning(content string) error {
+func (l *Logger) Warning(content string) error {
 	l.Flags = log.Lshortfile | log.LstdFlags
 	return l.Add(content, 1)
 }
 
 //错误信息
-func (l *Log) Error(content string) error {
+func (l *Logger) Error(content string) error {
 	l.Flags = log.Llongfile | log.LstdFlags
 	return l.Add(content, 2)
 }
 
 //严重错误
-func (l *Log) Fatal(content string) error {
+func (l *Logger) Fatal(content string) error {
 	l.Flags = log.Llongfile | log.LstdFlags
 	return l.Add(content, 3)
+}
+
+//严重错误
+func (l *Logger) Debug(content string) error {
+	l.Flags = log.Llongfile | log.LstdFlags
+	return l.Add(content, 4)
 }
