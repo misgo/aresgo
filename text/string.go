@@ -32,6 +32,21 @@ func SpliceString(chars ...string) string {
 	return sb.ToString()
 }
 
+//拼接[]byte型字符串
+func SpliceByte(bs ...[]byte) []byte {
+	newByte := []byte("")
+	if len(bs) > 0 {
+		buffer := bytes.NewBuffer(newByte)
+		for _, v := range bs {
+			buffer.Write(v)
+		}
+		return buffer.Bytes()
+	} else {
+		return newByte
+	}
+
+}
+
 //初始化新的字符串构造器StringBuilder
 func NewString(chars ...string) *StringBuilder {
 	return stringBuilderInit(chars)
@@ -62,6 +77,11 @@ func (sb *StringBuilder) Append(str string) int {
 //获取拼接的字符串
 func (sb *StringBuilder) ToString() string {
 	return sb.buffer.String()
+}
+
+//获取拼接的字符串的Bytes
+func (sb *StringBuilder) ToBytes() []byte {
+	return sb.buffer.Bytes()
 }
 
 //高效拼接字符串-----end---
