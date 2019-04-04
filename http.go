@@ -20,7 +20,6 @@ import (
 	"github.com/misgo/aresgo/router/fasthttp"
 	"github.com/misgo/aresgo/text"
 )
-
 const (
 	ActionGet     = "GET"
 	ActionPost    = "POST"
@@ -32,7 +31,6 @@ const (
 	ActionOptions = "OPTIONS"
 	ActionTrace   = "TRACE"
 )
-
 var (
 	defaultContentType = []byte("text/plain; charset=utf-8")
 	questionMark       = []byte("?")
