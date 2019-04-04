@@ -5,7 +5,6 @@
 	@version: 1.0.1
 */
 package aresgo
-
 import (
 	"encoding/json"
 	"fmt"
