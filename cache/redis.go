@@ -7,12 +7,15 @@
 package Cache
 
 import (
-	"github.com/misgo/aresgo/cache/redigo/redis"
 	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/misgo/aresgo/cache/redigo/redis"
+	"github.com/misgo/aresgo/framework"
+	"github.com/misgo/aresgo/text"
 )
 
 type (
@@ -23,6 +26,7 @@ type (
 
 		readerSettings *RedisSettings
 		writerSettings *RedisSettings
+		KeyPre         string
 	}
 	RedisSettings struct {
 		IP          string //IP地址
@@ -31,8 +35,8 @@ type (
 		MaxIdle     int
 		IdleTimeout int
 		MaxActive   int
-
-		DbNum int //默认数据编号
+		KeyPre      string //redis key前缀
+		DbNum       int    //默认数据编号
 	}
 )
 
@@ -44,6 +48,7 @@ func NewRedis(settings map[string]*RedisSettings) *RedisModel {
 
 	r.redisReader = r.Connect(r.readerSettings)
 	r.redisWriter = r.Connect(r.writerSettings)
+	r.KeyPre = r.writerSettings.KeyPre
 	//	fmt.Printf("%v\r\n", r.redisReader)
 	return r
 }
@@ -142,9 +147,12 @@ func (r *RedisModel) GetBool(key string, hashKey ...string) bool {
 //获取单个值(兼容string和hash)
 func (r *RedisModel) Get(key string, hashKey ...string) (interface{}, error) {
 	if key == "" {
+		if frame.Debug {
+			Text.Log("debug").Debug("[redis]Key不可以为空")
+		}
 		return nil, errors.New("Key不可以为空")
 	}
-
+	key = r.GenerateKey(key)
 	if len(hashKey) > 0 {
 		return r.Query("hget", key, hashKey[0])
 	} else {
@@ -158,25 +166,31 @@ func (r *RedisModel) Get(key string, hashKey ...string) (interface{}, error) {
 func (r *RedisModel) GetHashList(keys map[string][]string) (map[string]map[string]interface{}, error) {
 	lkeys := len(keys)
 	if lkeys < 1 {
+		if frame.Debug {
+			Text.Log("debug").Debug("[redis]Key不可以为空")
+		}
 		return nil, errors.New("Key不可以为空")
 	}
 
 	res := make(map[string]map[string]interface{}) //结果集
 	var err error                                  //错误信息
-	var c redis.Conn                               //redis链接
+	var c redis.Conn
 	c, err = r.getConn(r.redisReader, r.readerSettings)
-	defer c.Close()
 	if err != nil { //链接不通
 		return nil, err
 	}
+	defer c.Close()
 	var allKeys [][]interface{}
+
 	for k, v := range keys {
+		k = r.GenerateKey(k)
 		var key []interface{}
 		if len(v) > 0 { //取部分
 			key = append(key, k)
 			for _, str := range v {
 				key = append(key, str)
 			}
+
 			err = c.Send("HMGET", key...)
 			if err != nil {
 				key = make([]interface{}, 0) //有错误将此值赋空值
@@ -194,6 +208,7 @@ func (r *RedisModel) GetHashList(keys map[string][]string) (map[string]map[strin
 			if reply, err = c.Receive(); err == nil {
 				redisKey := allKeys[i][:1][0].(string)
 				hashKeys := allKeys[i][1:]
+				redisKey = strings.TrimLeft(redisKey, r.KeyPre)
 				res[redisKey] = r.buildKeyVals(hashKeys, reply)
 			}
 		}
@@ -206,7 +221,11 @@ func (r *RedisModel) GetStrList(keys ...interface{}) map[string]interface{} {
 	lkeys := len(keys)
 	res := make(map[string]interface{})
 	if lkeys > 0 {
-		vals, err := r.Query("MGET", keys...) //获取值
+		var rKeys []interface{}
+		for _, v := range keys {
+			rKeys = append(rKeys, r.GenerateKey(v.(string)))
+		}
+		vals, err := r.Query("MGET", rKeys...) //获取值
 		if err == nil {
 			res = r.buildKeyVals(keys, vals)
 		}
@@ -247,6 +266,7 @@ func (r *RedisModel) Set(key string, val interface{}, timeout ...int64) bool {
 			expire = timeout[0]
 		}
 	}
+	key = r.GenerateKey(key)
 	if expire > 0 {
 		_, err = r.Do("SETEX", key, expire, val)
 	} else {
@@ -273,16 +293,18 @@ func (r *RedisModel) SetValues(vals map[string]interface{}, hashKey ...string) i
 	var c redis.Conn       //redis链接
 
 	c, err = r.getConn(r.redisWriter, r.writerSettings)
-	defer c.Close()
 	if err != nil { //链接不通返回空
 		return 0
 	}
+	defer c.Close()
 	if len(hashKey) > 0 {
 		for k, v := range vals {
-			err = c.Send("HSET", hashKey[0], k, v)
+			rKey := r.GenerateKey(hashKey[0])
+			err = c.Send("HSET", rKey, k, v)
 		}
 	} else {
 		for k, v := range vals {
+			k := r.GenerateKey(k)
 			err = c.Send("SET", k, v)
 		}
 	}
@@ -305,6 +327,7 @@ func (r *RedisModel) HSet(hashKey string, key string, val interface{}) bool {
 	if hashKey == "" || key == "" {
 		return false
 	}
+	hashKey = r.GenerateKey(hashKey)
 	_, err := r.Do("hset", hashKey, key, val)
 	if err != nil {
 		return false
@@ -313,13 +336,38 @@ func (r *RedisModel) HSet(hashKey string, key string, val interface{}) bool {
 	}
 }
 
+//删除键，可删除多个
+func (r *RedisModel) Del(keys ...string) int {
+	if len(keys) < 1 {
+		return 0
+	}
+	var newKeys []interface{}
+	for _, v := range keys {
+		newKeys = append(newKeys, r.GenerateKey(v))
+	}
+	reply, err := r.Do("DEL", newKeys...)
+	if err != nil {
+		Text.Log("error").Error(fmt.Sprintf("redis del error:%v", err.Error()))
+		return 0
+	} else {
+		res, err := redis.Int(reply, err)
+		if err != nil {
+			Text.Log("error").Error(fmt.Sprintf("redis del toInt error:%v", err.Error()))
+			return 0
+		} else {
+			return res
+		}
+	}
+}
+
 //删除键或Hash中的多个建（兼容hash）
 //@param key redis中的键
 //@param hashKey hash中的键列表，一个或多个（如果此处不填则删除整个键，否则只删除hash中的单个键）
-func (r *RedisModel) Del(key string, hashKey ...string) bool {
+func (r *RedisModel) HDel(key string, hashKey ...string) bool {
 	if key == "" {
 		return false
 	}
+	key = r.GenerateKey(key)
 	var reply interface{}
 	var err error
 	if len(hashKey) > 0 {
@@ -342,10 +390,11 @@ func (r *RedisModel) Del(key string, hashKey ...string) bool {
 }
 
 //设置键的失效时间
-func (r *RedisModel) SetTimeout(key string, second int) bool {
+func (r *RedisModel) SetTimeout(key string, second int64) bool {
 	if key == "" {
 		return false
 	}
+	key = r.GenerateKey(key)
 	reply, err := r.Do("EXPIRE", key, second)
 	if err != nil {
 		return false
@@ -361,6 +410,7 @@ func (r *RedisModel) GetTimeout(key string) int {
 	if key == "" {
 		return 0
 	}
+	key = r.GenerateKey(key)
 	var err error
 	var reply interface{}
 	reply, err = r.Query("TTL", key)
@@ -457,4 +507,9 @@ func (r *RedisModel) String(i interface{}, err error) (string, error) {
 //将数据转换为map[string]string
 func (r *RedisModel) StringMap(i interface{}, err error) (map[string]string, error) {
 	return redis.StringMap(i, err)
+}
+
+//构造Redis Key，添加Key前缀避免共享库空间的Key冲突
+func (r *RedisModel) GenerateKey(key string) string {
+	return Text.SpliceString(r.KeyPre, key)
 }
