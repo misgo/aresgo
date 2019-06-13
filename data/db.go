@@ -16,6 +16,7 @@ import (
 	"time"
 
 	_ "github.com/misgo/aresgo/data/mysql"
+	"github.com/misgo/aresgo/framework"
 	"github.com/misgo/aresgo/text"
 )
 
@@ -99,6 +100,12 @@ func NewDb(driver string, config map[string]*DbSettings) *DbModel {
 
 //初始化数据库
 func Init(driver string, linkstr string) *sql.DB {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			fmt.Printf("[ERROR]发生错误：数据库[%s]服务链接失败！请检查数据库！\r\n", driver)
+			Text.Log("db_error").Error(fmt.Sprintf("db init ping error:%s", r))
+		}
+	}()
 	db, err := sql.Open(driver, linkstr)
 	checkErr(err)
 	db.SetMaxOpenConns(2000) //设置最大打开的连接数，默认值为0表示不限制,可以避免并发太高导致连接mysql出现too many connections的错误
@@ -181,12 +188,16 @@ func (m *DbModel) Where(queryString string, args ...interface{}) *DbModel {
 //从数据库中查询出列表并映射为一个struct列表
 //@param structList 结构体对象数组
 func (m *DbModel) FindList(structList interface{}) error {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			Text.Log("db_error").Error(fmt.Sprintf("find model list error:%s", r))
+		}
+	}()
 	rv := reflect.Indirect(reflect.ValueOf(structList))
 	rt := rv.Type().Elem()
 	rvNew := reflect.New(rt)
 	m.ConvertModelToMap(rvNew.Interface()) //将字段结构转换map
 	res, err := m.Select()
-
 	if err == nil && len(*res) > 0 { //有数据
 		if rv.Kind() != reflect.Slice {
 			return errors.New("不是对象指针")
@@ -200,6 +211,9 @@ func (m *DbModel) FindList(structList interface{}) error {
 		}
 		return nil
 	} else {
+		if frame.Debug {
+			Text.Log("debug").Debug("未能查找到数据")
+		}
 		return errors.New("未能查找到数据")
 	}
 }
@@ -207,6 +221,11 @@ func (m *DbModel) FindList(structList interface{}) error {
 //从数据库中查询一条数据并映射到struct
 //@param i struct对象
 func (m *DbModel) Find(i interface{}) error {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			Text.Log("db_error").Error(fmt.Sprintf("find model error:%s", r))
+		}
+	}()
 	rv := reflect.Indirect(reflect.ValueOf(i))
 	rt := rv.Type()
 	if rt.Kind() != reflect.Struct {
@@ -225,6 +244,9 @@ func (m *DbModel) Find(i interface{}) error {
 		}
 		return nil
 	} else {
+		if frame.Debug {
+			Text.Log("debug").Debug("未能查找到数据")
+		}
 		return errors.New("未能查找到数据")
 	}
 
@@ -234,9 +256,17 @@ func (m *DbModel) Find(i interface{}) error {
 //@param i 查询出的Struct对象
 //@param pkArgs 主键值（含多个）
 func (m *DbModel) FindByPK(i interface{}, pkArgs ...interface{}) error {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			Text.Log("db_error").Error(fmt.Sprintf("find model by PK error:%s", r))
+		}
+	}()
 	rv := reflect.Indirect(reflect.ValueOf(i))
 	rt := rv.Type()
 	if rt.Kind() != reflect.Struct {
+		if frame.Debug {
+			Text.Log("debug").Debug("获取的数据类型必须为struct")
+		}
 		return errors.New("获取的数据类型必须为struct")
 	}
 	m.ConvertModelToMap(rv.Interface()) //将字段结构转换map
@@ -277,9 +307,55 @@ func (m *DbModel) FindByPK(i interface{}, pkArgs ...interface{}) error {
 		}
 		return nil
 	} else {
+		if frame.Debug {
+			Text.Log("debug").Debug("未能查找到数据")
+		}
 		return errors.New("未能查找到数据")
 	}
 
+}
+
+//用户CURD操作时,查询记录总数
+func (m *DbModel) Count() int {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			Text.Log("db_error").Error(fmt.Sprintf("count error:%s", r))
+		}
+	}()
+	sql := Text.NewString("SELECT COUNT(1) AS total FROM ")
+	sql.Append(m.TableName)
+	//where
+	if m.WhereStr != "" {
+		sql.Append(" WHERE ")
+		sql.Append(m.WhereStr)
+	}
+	//group by
+	if m.GroupByStr != "" {
+		sql.Append(" GROUP BY ")
+		sql.Append(m.GroupByStr)
+		if m.HavingStr != "" {
+			sql.Append(" HAVING ")
+			sql.Append(m.HavingStr)
+		}
+	}
+	//SQL调试
+	if frame.Debug {
+		Text.Log("debug").Debug(sql.ToString())
+	}
+
+	res, err := m.GetRow(sql.ToString(), m.Param...)
+	var count int = 0
+	if err == nil {
+		if len(res) > 0 {
+			total, reserr := strconv.Atoi(res["total"])
+			if reserr == nil {
+				count = total
+			}
+		}
+	} else {
+		Text.Log("db").Error(fmt.Sprintf("%v", err.Error()))
+	}
+	return count
 }
 
 //用户CURD操作时,根据struct结构体查询出结果
@@ -316,13 +392,16 @@ func (m *DbModel) Select() (*[]map[string]string, error) {
 
 	//limit 0,1
 	if m.RowsNum > 0 {
-		sql.Append(" Limit ")
+		sql.Append(" LIMIT ")
 		sql.Append(strconv.Itoa(m.Offset))
 		sql.Append(",")
 		sql.Append(strconv.Itoa(m.RowsNum))
 	}
 	//SQL调试
-	//fmt.Printf("%s", sql.ToString())
+	if frame.Debug {
+		Text.Log("debug").Debug(sql.ToString())
+	}
+
 	//	ret := make([]map[string]string, 0)
 	//	return &ret, errors.New("debug")
 	return m.Query(sql.ToString(), m.Param...)
@@ -346,6 +425,11 @@ func (m *DbModel) ConvertMapToModel(s map[string]string, mStruct interface{}) er
 
 //转换为Struct对象的元素（单个元素值设置）
 func (m *DbModel) convertToModelElem(fieldValue reflect.Value, field reflect.StructField, s map[string]string) error {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			Text.Log("db_error").Error(fmt.Sprintf("convert to model element error:%s", r))
+		}
+	}()
 	var sKey string
 	fieldTag := field.Tag.Get("field")
 	if fieldTag != "" {
@@ -450,7 +534,7 @@ func (m *DbModel) convertToModelElem(fieldValue reflect.Value, field reflect.Str
 		default:
 			return errors.New("未发现可以支持的类型: " + reflect.TypeOf(newValue).String())
 		}
-		//		fmt.Printf("%v:%v;type:%v\r\n", field.Name, newValue, reflect.TypeOf(newValue).String())
+		//fmt.Printf("%v:%v;type:%v\r\n", field.Name, newValue, reflect.TypeOf(newValue).String())
 		fieldValue.Set(reflect.ValueOf(newValue)) //将字段写入struct
 		return nil
 	} else {
@@ -463,9 +547,7 @@ func (m *DbModel) convertToModelElem(fieldValue reflect.Value, field reflect.Str
 func (m *DbModel) ConvertModelToMap(s interface{}) *DbModel {
 	if reflect.TypeOf(reflect.Indirect(reflect.ValueOf(s)).Interface()).Kind() == reflect.Slice {
 		sliceValue := reflect.Indirect(reflect.ValueOf(s))
-
 		sliceElementType := sliceValue.Type().Elem()
-
 		for i := 0; i < sliceElementType.NumField(); i++ {
 			field := sliceElementType.Field(i)
 			m.setFieldMap(field, sliceValue)
@@ -491,17 +573,11 @@ func (m *DbModel) setFieldMap(field reflect.StructField, rv reflect.Value) {
 	tagType = field.Tag.Get("type")
 	tagIsAuto = strings.Trim(field.Tag.Get("auto"), " ") //是否为数据库自动字段
 
-	if tagKey != "notfield" { //不属于数据库字段不添加到字段值列表
+	if tagField != "" { //不属于数据库字段不添加到字段值列表
 		//构造字段表map
-		var fmField string
-		if tagField != "" {
-			fmField = tagField
-		} else {
-			fmField = field.Name
-		}
+		var fmField string = tagField
 		val := rv.FieldByName(field.Name).Interface()
-
-		if tagIsAuto != "1" { //字段赋值
+		if tagIsAuto != "1" { //字段赋值,非自增主键
 			if field.Type.Kind() == reflect.Struct && field.Type.String() == "time.Time" { //time类型
 				fieldTime := val.(time.Time)
 				if !fieldTime.IsZero() {
@@ -587,6 +663,41 @@ func (m *DbModel) Insert(fieldmap map[string]interface{}) (int64, error) {
 	}
 	sql := fmt.Sprintf("INSERT INTO %v (%v) VALUES (%v) %v", m.TableName, strings.Join(fields, ", "), strings.Join(placeholders, ", "), whereStr)
 	//sql调试
+	if frame.Debug {
+		Text.Log("debug").Debug(sql)
+	}
+	//fmt.Println(sql, "\r\n")
+	//fmt.Println(values, "\r\n")
+	//	return -1, nil
+	return m.Execute(MethodInsert, sql, values...)
+}
+
+//批量添加数据，[][]interface{}添加数据
+//create by hyperion at 2018-7-24 11:29
+func (m *DbModel) InsertValues(fields string, vals [][]interface{}) (int64, error) {
+	if m.TableName == "" || len(fields) < 1 || len(vals) < 1 {
+		panic("数据表名不能为空或字段列表不能为空且字段值不能为空")
+	}
+	var values []interface{}
+	valueSb := Text.NewString("")
+
+	for k, v := range vals {
+		var placeholders []string
+		for _, iv := range v {
+			placeholders = append(placeholders, "?")
+			values = append(values, iv)
+		}
+		val := Text.SpliceString("(", strings.Join(placeholders, ","), ")")
+		if k > 0 {
+			val = Text.SpliceString(",", val)
+		}
+		valueSb.Append(val)
+	}
+	sql := fmt.Sprintf("REPLACE INTO %v (%v) VALUES %v ", m.TableName, fields, valueSb.ToString())
+	//sql调试
+	if frame.Debug {
+		Text.Log("debug").Debug(sql)
+	}
 	//fmt.Println(sql, "\r\n")
 	//fmt.Println(values, "\r\n")
 	//	return -1, nil
@@ -595,6 +706,11 @@ func (m *DbModel) Insert(fieldmap map[string]interface{}) (int64, error) {
 
 //更新数据，用户CURD操作时的更新，通过构建map[string]interface{}更新数据
 func (m *DbModel) Update(fieldmap map[string]interface{}) (int64, error) {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			Text.Log("db_error").Error(fmt.Sprintf("execute error:%s", r))
+		}
+	}()
 	if m.TableName == "" || len(fieldmap) < 1 {
 		panic("数据表名不能为空或字段列表不能为空")
 	}
@@ -617,6 +733,9 @@ func (m *DbModel) Update(fieldmap map[string]interface{}) (int64, error) {
 	}
 	sql := fmt.Sprintf("UPDATE %v SET %v %v", m.TableName, strings.Join(items, ", "), whereStr)
 	//sql调试
+	if frame.Debug {
+		Text.Log("debug").Debug(sql)
+	}
 	//	fmt.Println(sql, "\r\n")
 	//	fmt.Println(values, "\r\n")
 	//	return -1, nil
@@ -658,6 +777,9 @@ func (m *DbModel) Delete(pkArgs ...interface{}) (int64, error) {
 
 	sql := fmt.Sprintf("DELETE FROM %v %v", m.TableName, sb.ToString())
 	//sql调试
+	if frame.Debug {
+		Text.Log("debug").Debug(sql)
+	}
 	//	fmt.Println(sql, "\r\n")
 	//	fmt.Println(m.Param, "\r\n")
 	//	return -1, nil
@@ -666,6 +788,11 @@ func (m *DbModel) Delete(pkArgs ...interface{}) (int64, error) {
 
 //数据库修改操作（insert/update/delete）
 func (m *DbModel) Execute(opt string, sqlstr string, args ...interface{}) (int64, error) {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			Text.Log("db_error").Error(fmt.Sprintf("execute error:%s", r))
+		}
+	}()
 	defer m.ResetDbModel()
 	stmt, err := m.dbWriter.Prepare(sqlstr)
 	checkErr(err)
@@ -695,11 +822,17 @@ func (m *DbModel) GetRow(sqlstr string, args ...interface{}) (map[string]string,
 
 //数据库查询操作（select）
 func (m *DbModel) Query(sqlstr string, args ...interface{}) (*[]map[string]string, error) {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			Text.Log("sql_error").Error(fmt.Sprintf("sql error:%s", sqlstr))
+			Text.Log("sql_error").Error(fmt.Sprintf("sql error:%v", args))
+			Text.Log("db_error").Error(fmt.Sprintf("query error:%s", r))
+		}
+	}()
 	defer m.ResetDbModel()
 	sqlstr = checkSql(sqlstr)
 	ret := make([]map[string]string, 0) //返回的结果集
-
-	if m.dbReader == nil { //如果数据库实例未能获取到，返回空列表
+	if m.dbReader == nil {              //如果数据库实例未能获取到，返回空列表
 		return &ret, nil
 	}
 	stmp, err := m.dbReader.Prepare(sqlstr)
@@ -744,6 +877,7 @@ func (m *DbModel) ResetDbModel() {
 	m.Offset = 0
 	m.Order = ""
 	m.WhereStr = ""
+	m.Param = m.Param[:0:0] //清空参数列表
 	m.PrimaryKeys = make(map[string]interface{})
 	m.FieldMap = make(map[string]interface{})
 	m.fieldStructMap = make(map[string]string)
@@ -757,7 +891,7 @@ func checkSql(sqlstr string) string {
 //检查错误
 func checkErr(err error) {
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("db error:%v", err.Error()))
 	}
 }
 
