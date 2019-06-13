@@ -91,9 +91,19 @@ func (v *Validation) Max(obj interface{}, max int, key string) *Result {
 	return v.validate(Max{max, key}, obj)
 }
 
-//Validatio n方法---取值范围验证，必须介入最大最小值之间
+//Validatio 方法---取值范围验证，必须介入最大最小值之间
 func (v *Validation) Range(obj interface{}, min, max int, key string) *Result {
 	return v.validate(Range{Min{Min: min}, Max{Max: max}, key}, obj)
+}
+
+//Validatio 方法---最小长度验证，类型为：string or slice
+func (v *Validation) MinLen(obj interface{}, min int, key string) *Result {
+	return v.validate(MinLen{min, key}, obj)
+}
+
+//Validatio 方法---最大长度验证，类型为：string or slice
+func (v *Validation) MaxLen(obj interface{}, max int, key string) *Result {
+	return v.validate(MaxLen{max, key}, obj)
 }
 
 //Validation方法---Email验证
@@ -144,6 +154,11 @@ func (v *Validation) ChineseChar(data interface{}, key string) *Result {
 //Validation方法---日期验证
 func (v *Validation) ValidDate(data interface{}, key string) *Result {
 	return v.validate(Match{Regexp: datePattern, Key: key, TplKey: "Date"}, data)
+}
+
+//Validation方法---普通名称验证
+func (v *Validation) CommonName(data interface{}, key string) *Result {
+	return v.validate(Match{Regexp: commonName, Key: key, TplKey: "CommonName"}, data)
 }
 
 //验证是否满足条件
