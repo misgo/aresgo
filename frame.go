@@ -1,4 +1,3 @@
-// frame
 package aresgo
 
 import (
@@ -8,9 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/misgo/aresgo/router/fasthttp"
+
 	"github.com/misgo/aresgo/cache"
 	"github.com/misgo/aresgo/config"
 	"github.com/misgo/aresgo/data"
+	"github.com/misgo/aresgo/text"
 )
 
 //常量定义
@@ -38,25 +40,28 @@ const (
 	DbUpdate = "UPDATE"
 	DbDelete = "DELETE"
 	DbSelect = "SELECT"
-)
-
-//结构体定义
-type (
-	FrameWork struct{}
+	//存储模式定义
+	ModeRedis = "redis"
+	ModeDb    = "db"
 )
 
 //初始化定义
 var (
-	StartTime       string                                                            //程序启动时间
-	DS              *Db.DbModel                  = nil                                //当前数据库对象实例
-	DbModels        map[string]*Db.DbModel       = make(map[string]*Db.DbModel)       //数据库对象列表
-	DbConfigPath    string                       = ""                                 //数据库配置文件路径
-	dbConfiger      config.Configer              = nil                                //数据库配置文件对象
+	StartTime string //程序启动时间
+	//---数据库---
+	DS           *Db.DbModel            = nil                          //当前数据库对象实例
+	DbModels     map[string]*Db.DbModel = make(map[string]*Db.DbModel) //数据库对象列表
+	DbConfigPath string                 = ""                           //数据库配置文件路径
+	dbConfiger   config.Configer        = nil                          //数据库配置文件对象
+	//---Redis缓存---
+	RS              *Cache.RedisModel            = nil                                //当前Redis对象实例
 	RedisModels     map[string]*Cache.RedisModel = make(map[string]*Cache.RedisModel) //Redis对象列表
 	RedisConfigPath string                       = ""                                 //Redis配置文件路径
 	CacheConfigPath string                       = ""                                 //缓存配置文件路径
-	CustomVar       map[string]interface{}                                            //用户自定义全局变量
-	TemplatePaths   map[string][]string                                               //用户自定义页面模板列表
+	//---用户自定义---
+	CustomVar     map[string]interface{} //用户自定义全局变量
+	TemplatePaths map[string][]string    //用户自定义页面模板列表
+
 )
 
 //初始化数据库配置
@@ -75,9 +80,7 @@ func D(dbkey string) *Db.DbModel {
 		if err != nil {
 			return &Db.DbModel{}
 		}
-
 	}
-
 	return DbModels[dbkey]
 }
 
@@ -91,7 +94,7 @@ func getDbModel(dbkey string) error {
 		}
 	}
 	//设置数据库主从配置，从配置文件中获取
-	var settings map[string]*Db.DbSettings = make(map[string]*Db.DbSettings)
+	var settings map[string]*Db.DbSettings = make(map[string]*Db.DbSettings, 2)
 	//从库配置
 	dbreader := &Db.DbSettings{
 		Ip:        dbConfiger.DefaultString(fmt.Sprintf("%s.slave.ip", dbkey), "127.0.0.1"),
@@ -101,7 +104,6 @@ func getDbModel(dbkey string) error {
 		Charset:   dbConfiger.DefaultString(fmt.Sprintf("%s.slave.charset", dbkey), "utf8"),
 		DefaultDb: dbConfiger.DefaultString(fmt.Sprintf("%s.slave.db", dbkey), ""),
 	}
-
 	//主库配置
 	dbwriter := &Db.DbSettings{
 		Ip:        dbConfiger.DefaultString(fmt.Sprintf("%s.master.ip", dbkey), "127.0.0.1"),
@@ -119,7 +121,6 @@ func getDbModel(dbkey string) error {
 	}
 	settings["master"] = dbwriter
 	settings["slave"] = dbreader
-
 	db := Db.NewDb("mysql", settings)
 	DbModels[dbkey] = db
 	return nil
@@ -160,8 +161,7 @@ func getRedisModel(redisKey string) error {
 	if RedisConfigPath != "" {
 		redisConfiger, err := LoadConfig("json", RedisConfigPath)
 		if err == nil {
-			var settings map[string]*Cache.RedisSettings = make(map[string]*Cache.RedisSettings)
-
+			var settings map[string]*Cache.RedisSettings = make(map[string]*Cache.RedisSettings, 2)
 			settings["master"] = &Cache.RedisSettings{
 				IP:          redisConfiger.DefaultString(fmt.Sprintf("%s.master.ip", redisKey), "127.0.0.1"),
 				Port:        redisConfiger.DefaultString(fmt.Sprintf("%s.master.port", redisKey), "6379"),
@@ -170,6 +170,7 @@ func getRedisModel(redisKey string) error {
 				MaxIdle:     redisConfiger.DefaultInt(fmt.Sprintf("%s.master.maxidle", redisKey), 3),
 				MaxActive:   redisConfiger.DefaultInt(fmt.Sprintf("%s.master.maxactive", redisKey), 1000),
 				IdleTimeout: redisConfiger.DefaultInt(fmt.Sprintf("%s.master.idletimeout", redisKey), 180),
+				KeyPre:      redisConfiger.DefaultString(fmt.Sprintf("%s.master.key_pre", redisKey), "misgo_"),
 			}
 
 			settings["slave"] = &Cache.RedisSettings{
@@ -180,6 +181,7 @@ func getRedisModel(redisKey string) error {
 				MaxIdle:     redisConfiger.DefaultInt(fmt.Sprintf("%s.slave.maxidle", redisKey), 3),
 				MaxActive:   redisConfiger.DefaultInt(fmt.Sprintf("%s.slave.maxactive", redisKey), 1000),
 				IdleTimeout: redisConfiger.DefaultInt(fmt.Sprintf("%s.slave.idletimeout", redisKey), 180),
+				KeyPre:      redisConfiger.DefaultString(fmt.Sprintf("%s.slave.key_pre", redisKey), "misgo_"),
 			}
 			RedisModels[redisKey] = Cache.NewRedis(settings)
 			return nil
@@ -210,7 +212,6 @@ func LoadConfig(ctype string, filePath string) (config.Configer, error) {
 func GetAppPath() (appPath string, appDir string) {
 	var err error
 	appPath, err = filepath.Abs(os.Args[0])
-
 	if err == nil {
 		appPath = strings.Replace(appPath, "\\", "/", -1)
 		appDir, err = filepath.Abs(filepath.Dir(os.Args[0]))
@@ -222,6 +223,41 @@ func GetAppPath() (appPath string, appDir string) {
 	} else {
 		appPath = ""
 	}
-
 	return appPath, appDir
+}
+
+//访问远端接口，支持POST和GET
+func Curl(action string, url string, params map[string]interface{}) ([]byte, error) {
+	req := &fasthttp.Request{}
+	req.Header.SetMethod(action)
+	req.Header.SetContentType("application/x-www-form-urlencoded;charset=utf-8")
+	req.Header.Set("Connection", "Keep-Alive")
+	req.SetRequestURI(url)
+	var err error
+	if params != nil {
+		if len(params) > 0 {
+			sb := Text.NewString("")
+			for k, v := range params {
+				val := Text.GetBytes(v)
+				if err == nil {
+					sb.AppendBytes([]byte("&"))
+					sb.AppendBytes([]byte(k))
+					sb.AppendBytes([]byte("="))
+					sb.AppendBytes(val)
+				}
+			}
+			req.AppendBody(sb.ToBytes())
+		}
+	}
+	resp := &fasthttp.Response{}
+	client := &fasthttp.Client{}
+	client.Name = "areshttp"
+	err = client.Do(req, resp)
+	defer resp.ResetBody()
+	if resp.StatusCode() != 200 {
+		return nil, errors.New(fmt.Sprintf("地址[%s]链接失败！", url))
+	} else if err != nil {
+		return nil, err
+	}
+	return resp.Body(), nil
 }
