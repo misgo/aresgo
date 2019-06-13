@@ -33,32 +33,34 @@ var (
 	weakPwdPattern = regexp.MustCompile("^[a-zA-Z]\\w{5,17}$")
 	//强密码验证,必须包含大小写字母和数字的组合，不能使用特殊字符，长度在8个字符以上
 	strongPwdPattern = regexp.MustCompile("^[A-Z]+[a-z0-9]{7,}$")
-
 	//中文字符,必须为中文字符
 	cnCharPattern = regexp.MustCompile("^[\u4e00-\u9fa5]{0,}$")
 	//日期检验，已考虑平闰年，日期格式：yyyy-mm-dd
 	//datePattern = regexp.MustCompile("^(?:(?!0000)[0-9]{4}-(?:(?:0[1-9]|1[0-2])-(?:0[1-9]|1[0-9]|2[0-8])|(?:0[13-9]|1[0-2])-(?:29|30)|(?:0[13578]|1[02])-31)|(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29)$")
-	datePattern = regexp.MustCompile("^\\d+$")
+	datePattern = regexp.MustCompile("^[A-Za-z0-9]+$")
+	//普通名称验证,中文英文数字，不能包含空格和标点
+	commonName = regexp.MustCompile("^[0-9a-zA-Z\u4E00-\u9FA5]+$")
 	//错误消息模板
 	MessageTpl = map[string]string{
-		"Required":  "值不可为空",
-		"Range":     "取值范围必须在%d至%d之间",
-		"Numeric":   "必须为数字类型",
-		"Length":    "长度必须为%d",
-		"Mobile":    "手机号有误",
-		"IP":        "您输入的IP地址有误",
-		"Email":     "您输入的Email地址有误",
-		"Min":       "最小值必须为%d",
-		"Max":       "最大值必须为%d",
-		"MaxLen":    "最大长度必须为%d",
-		"MinLen":    "最小长度必须为%d",
-		"Phone":     "固定电话格式有误，格式：(010)81122333或010-811255 .88",
-		"EnNumeric": "输入的值只能包含英文字母和数字",
-		"Account":   "只能包含字母、数字或下划线，请保持在5-20个字符之间",
-		"WeakPwd":   "不符合要求，必须以字母开头，长度在6~18字符之间，只能包含字母、数字和下划线",
-		"StrongPwd": "不符合要求，必须包含大小写字母和数字的组合，不能使用特殊字符，长度在8个字符以上",
-		"CnChar":    "必须包含中文字符",
-		"Date":      "日期不符合要求，日期格式：yyyy-mm-dd",
+		"Required":   "值不可为空",
+		"Range":      "取值范围必须在%d至%d之间",
+		"Numeric":    "必须为数字类型",
+		"Length":     "长度必须为%d",
+		"Mobile":     "手机号有误",
+		"IP":         "您输入的IP地址有误",
+		"Email":      "您输入的Email地址有误",
+		"Min":        "最小值必须为%d",
+		"Max":        "最大值必须为%d",
+		"MaxLen":     "最大长度必须为%d",
+		"MinLen":     "最小长度必须为%d",
+		"Phone":      "固定电话格式有误，格式：(010)81122333或010-811255 .88",
+		"EnNumeric":  "输入的值只能包含英文字母和数字",
+		"Account":    "只能包含字母、数字或下划线，请保持在5-20个字符之间",
+		"CommonName": "名称只能包含中英文或数字",
+		"WeakPwd":    "不符合要求，必须以字母开头，长度在6~18字符之间，只能包含字母、数字和下划线",
+		"StrongPwd":  "不符合要求，必须包含大小写字母和数字的组合，不能使用特殊字符，长度在8个字符以上",
+		"CnChar":     "必须包含中文字符",
+		"Date":       "日期不符合要求，日期格式：yyyy-mm-dd",
 	}
 )
 
@@ -151,7 +153,7 @@ type Numeric struct {
 	Key string
 }
 
-//是否为数字
+//判断字符串是否为数字
 func (n Numeric) IsSatisfied(obj interface{}) bool {
 	if str, ok := obj.(string); ok {
 		for _, v := range str {
