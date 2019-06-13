@@ -14,6 +14,7 @@ package Text
 
 import (
 	"bytes"
+	"strconv"
 	//	"strings"
 )
 
@@ -74,6 +75,12 @@ func (sb *StringBuilder) Append(str string) int {
 	return len
 }
 
+//向末尾添加bytes
+func (sb *StringBuilder) AppendBytes(b []byte) int {
+	len, _ := sb.buffer.Write(b)
+	return len
+}
+
 //获取拼接的字符串
 func (sb *StringBuilder) ToString() string {
 	return sb.buffer.String()
@@ -85,6 +92,32 @@ func (sb *StringBuilder) ToBytes() []byte {
 }
 
 //高效拼接字符串-----end---
+
+//将interface{}转换为[]byte
+func GetBytes(i interface{}) []byte {
+	var v []byte
+	switch val := i.(type) {
+	case string:
+		v = []byte(val)
+	case []byte:
+		v = val
+	case int:
+		v = []byte(Int64ToString(int64(val)))
+	case int32:
+		v = []byte(Int64ToString(int64(val)))
+	case int64:
+		v = []byte(Int64ToString(val))
+	case float64:
+		v = []byte(strconv.FormatFloat(val, 'f', -1, 64))
+	case float32:
+		v = []byte(strconv.FormatFloat(float64(val), 'f', -1, 64))
+	case bool:
+		v = []byte(strconv.FormatBool(val))
+	default:
+		v = []byte("")
+	}
+	return v
+}
 
 //首字母大写其他转换成小写
 func FirstCharToUpper(str string) string {
@@ -143,7 +176,7 @@ func SubStrBytes(strByte []byte, startChar []byte, endChar []byte) []byte {
 }
 
 /**
-  截取字符串(截取开始于结束字符中间的部分，不包括开始于结束字符)
+  截取字符串(截取开始于结束字符中间的部分，不包括开始与结束字符)
   @param str 待处理的字符串
   @param cutstr 截取字符串标识（多参数，1个参数：开始字符；2个参数：第一个是开始字符，第二个是结束字符）
   @return 新字符
@@ -193,4 +226,43 @@ func CutStr(str string, start int, length int) string {
 		end = rl
 	}
 	return string(rs[start:end])
+}
+
+//string转换为int32
+func StringToInt32(str string) int32 {
+	i, err := strconv.ParseInt(str, 10, 32)
+	if err != nil {
+		return 0
+	}
+	return int32(i)
+}
+
+//string转换为int
+func StringToInt(str string) int {
+	i, err := strconv.Atoi(str)
+	if err != nil {
+		return 0
+	}
+	return i
+}
+
+//int64转换为字符串
+func Int64ToString(n int64) string {
+	buf := [11]byte{}
+	pos := len(buf)
+	signed := n < 0
+	if signed {
+		n = -n
+	}
+	for {
+		pos--
+		buf[pos], n = '0'+byte(n%10), n/10
+		if n == 0 {
+			if signed {
+				pos--
+				buf[pos] = '-'
+			}
+			return string(buf[pos:])
+		}
+	}
 }
