@@ -30,6 +30,11 @@ type (
 
 //log日志。最多添加10种类型的日志
 func Log(filename ...string) *Logger {
+	defer func() { //捕捉panic错误避免崩溃
+		if r := recover(); r != nil {
+			fmt.Printf("log error:%s", r)
+		}
+	}()
 	var fname string = "app"
 	if len(filename) > 0 {
 		fname = filename[0]
@@ -68,10 +73,8 @@ func (l *Logger) Add(content string, logtype int) error {
 	} else if logtype == 4 {
 		infoTag = "[DEBUG]"
 	}
-
 	logFile, logErr := os.OpenFile(l.FilePath, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if logErr != nil {
-		fmt.Println("Fail to find", *logFile, "Server start Failed")
 		os.Exit(1)
 		return logErr
 	}
@@ -100,18 +103,18 @@ func (l *Logger) Warning(content string) error {
 
 //错误信息
 func (l *Logger) Error(content string) error {
-	l.Flags = log.Llongfile | log.LstdFlags
+	l.Flags = log.Lshortfile | log.LstdFlags
 	return l.Add(content, 2)
 }
 
 //严重错误
 func (l *Logger) Fatal(content string) error {
-	l.Flags = log.Llongfile | log.LstdFlags
+	l.Flags = log.Lshortfile | log.LstdFlags
 	return l.Add(content, 3)
 }
 
-//严重错误
+//调试信息
 func (l *Logger) Debug(content string) error {
-	l.Flags = log.Llongfile | log.LstdFlags
+	l.Flags = log.Lshortfile | log.LstdFlags
 	return l.Add(content, 4)
 }
