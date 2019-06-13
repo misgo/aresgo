@@ -5,21 +5,23 @@
 	@version: 1.0.1
 */
 package aresgo
+
 import (
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"net"
 	"reflect"
 	"strconv"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 
 	"github.com/misgo/aresgo/router/fasthttp"
 	"github.com/misgo/aresgo/text"
 )
+
 const (
 	ActionGet     = "GET"
 	ActionPost    = "POST"
@@ -31,6 +33,7 @@ const (
 	ActionOptions = "OPTIONS"
 	ActionTrace   = "TRACE"
 )
+
 var (
 	defaultContentType = []byte("text/plain; charset=utf-8")
 	questionMark       = []byte("?")
@@ -42,10 +45,18 @@ type (
 		*fasthttp.RequestCtx
 		AllowCrossDomain bool
 		CrossOrigin      string
+		Errors           []*Err //请求上下文的错误列表
+		Datas            map[string]interface{}
 	}
 
 	HandlerFunc func(*Context)      //路由分发函数
 	HttpModule  func(*Context) bool //http拦截器
+
+	//错误
+	Err struct {
+		Code    int
+		Message string
+	}
 
 	//路由器
 	Router struct {
@@ -199,7 +210,6 @@ func (r *Router) Register(path string, s interface{}, httpmod HttpModule, action
 			r.Post(path, r.autoroute, httpmod)
 		}
 	}
-
 }
 
 // 路由处理句柄---Get方式
@@ -330,17 +340,17 @@ func (r *Router) Handler(ctx *Context) {
 	if r.PanicHandler != nil {
 		defer r.recv(ctx)
 	}
-
+	timenow := time.Now()          //当前
 	path := string(ctx.Path())     //访问路径
 	method := string(ctx.Method()) //访问方法：GET,POST,...
-
-	//autoPath:
 	//响应头统一处理
 	ctx.Response.Header.Set("Server", "areshttp")
-
 	//记录访问信息
 	ServerClientInfo(ctx)
-	//回调处理
+	//生成上下文存储空间
+	ctx.Datas = make(map[string]interface{})
+
+	//-----回调处理--------
 
 	//回调函数执行
 	if root := r.trees[method]; root != nil {
@@ -357,7 +367,13 @@ func (r *Router) Handler(ctx *Context) {
 					r.HttpModuleIntercept(ctx) //拒绝访问默认方法
 				}
 			}
-
+			//清除上下文存储的数据，释放空间
+			for k, _ := range ctx.Datas {
+				delete(ctx.Datas, k)
+			}
+			//计算程序执行时间
+			elapsed := time.Since(timenow)
+			fmt.Println("elapsed time: ", elapsed)
 			return
 		} else if method != ActionConn && path != "/" {
 			code := 301 // 永久重定向
@@ -433,7 +449,6 @@ func (r *Router) Handler(ctx *Context) {
 }
 
 //ServerFiles方式提供一种方式用来访问静态资源，如包含页面的管理系统中涉及的CSS、Javascritp、图片等静态资源
-// ServeFiles serves files from the given file system root.
 //路径设计必须用这种形式：/XXX/*filepath(必须以/*filepath为结尾标识)，还必须有文件目录的绝对地址路径
 //如静态文件路径存放在目录/var/www/static中，访问是想通过这种形式访问：http://www.XXX.com/static/XXX.js
 //可以这样设置：r.ServerFiles("/static/*filepath","/var/www/static")
@@ -457,18 +472,29 @@ func (r *Router) ServeFiles(path string, rootPath string, httpmod ...HttpModule)
 				fr_ctx.NotFound()
 			}
 		}
+		if ctx.AllowCrossDomain {
+			if ctx.CrossOrigin != "" {
+				ctx.RequestCtx.Response.Header.Set("Access-Control-Allow-Origin", ctx.CrossOrigin)
+			} else {
+				ctx.RequestCtx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+			}
+		}
+
 		fileHandler(ctx.RequestCtx)
 	}, hmod)
 }
 
-//----上下文处理方法---------start------
+//----上下文处理方法---------start---------------------------------
+
 //输出Json数据
 func (ctx *Context) ToJson(datas interface{}, msg ...string) {
 	//设置response头
-	if ctx.AllowCrossDomain && ctx.CrossOrigin != "" {
-		ctx.Response.Header.Set("Access-Control-Allow-Origin", ctx.CrossOrigin)
-	} else {
-		ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+	if ctx.AllowCrossDomain {
+		if ctx.CrossOrigin != "" {
+			ctx.Response.Header.Set("Access-Control-Allow-Origin", ctx.CrossOrigin)
+		} else {
+			ctx.Response.Header.Set("Access-Control-Allow-Origin", "*")
+		}
 	}
 	ctx.Response.Header.Add("Accept-Encoding", "gzip")
 	ctx.Response.Header.Add("Access-Control-Allow-Headers", "Content-Type")
@@ -535,7 +561,7 @@ func (ctx *Context) ToHtml(datas interface{}, pathsKey string, path ...string) {
 				tplPathList = append(tplPathList, fmt.Sprintf("%s/%s", tplBasePath, v))
 			}
 		}
-		//加载配置的模板路径
+		//加载预置的配置模板路径
 		if pathsKey != "" && TemplatePaths != nil {
 			if _, ok := TemplatePaths[pathsKey]; ok {
 				baseTplPaths := TemplatePaths[pathsKey]
@@ -546,14 +572,13 @@ func (ctx *Context) ToHtml(datas interface{}, pathsKey string, path ...string) {
 		}
 		//构造数据格式
 		dataMap["CustomVar"] = CustomVar
-		dataMap["Output"] = datas
+		dataMap["Data"] = datas
 		//解析模板文件
 		t, err := template.ParseFiles(tplPathList...)
 		if err != nil {
 			fmt.Println("[ERROR] ", err.Error())
 			return
 		}
-
 		t = template.Must(t, err)
 		err = t.Execute(ctx, dataMap)
 		if err != nil {
@@ -566,16 +591,25 @@ func (ctx *Context) ToHtml(datas interface{}, pathsKey string, path ...string) {
 
 }
 
-//----上下文处理方法----------end------
+//----上下文处理方法----------end------------------------------------
 
-//-----Cookie & Session -----start------
-//设置Cookie
-func (ctx *Context) SetCookie(key string, val string) {
+func (ctx *Context) Curl(url string) {
+	//	req := &fasthttp.Request{}
+	//	resp := &fasthttp.Response{}
+
+}
+
+//-----Cookie & Session -----start--------------------------------
+//设置Cookie,key:键；val:值；timeout过期时间（分钟）
+func (ctx *Context) SetCookie(key string, val string, timeout int) {
 	c := &fasthttp.Cookie{}
 	c.SetKey(key)
 	c.SetValue(val)
+	if timeout > 0 {
+		expireTime := time.Now().Add(time.Minute * time.Duration(timeout))
+		c.SetExpire(expireTime)
+	}
 	ctx.Response.Header.SetCookie(c)
-
 }
 
 //获取Cookie
