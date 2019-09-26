@@ -2,12 +2,13 @@
 	框架路由包,封装了监听路由方法，及路由后回调函数方法
 	@author : hyperion
 	@since  : 2016-12-05
-	@version: 1.0.1
+	@version: 1.0.161205
 */
 package aresgo
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"log"
 	"net"
@@ -591,13 +592,20 @@ func (ctx *Context) ToHtml(datas interface{}, pathsKey string, path ...string) {
 
 }
 
-//----上下文处理方法----------end------------------------------------
-
-func (ctx *Context) Curl(url string) {
-	//	req := &fasthttp.Request{}
-	//	resp := &fasthttp.Response{}
-
+//输出xml数据
+func (ctx *Context) ToXml(datas interface{}) {
+	//设置返回信息头
+	ctx.SetContentType("text/xml; charset=utf-8")
+	ctx.Response.Header.Add("Time", fmt.Sprintf("%d", time.Now().Unix()))
+	var body []byte = []byte("")
+	xmlBytes, err := xml.Marshal(datas)
+	if err == nil {
+		body = xmlBytes
+	}
+	ctx.Response.SetBody(body)
 }
+
+//----上下文处理方法----------end------------------------------------
 
 //-----Cookie & Session -----start--------------------------------
 //设置Cookie,key:键；val:值；timeout过期时间（分钟）
