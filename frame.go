@@ -7,12 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/misgo/aresgo/router/fasthttp"
-
 	"github.com/misgo/aresgo/cache"
 	"github.com/misgo/aresgo/config"
 	"github.com/misgo/aresgo/data"
-	"github.com/misgo/aresgo/text"
+	//	"github.com/misgo/aresgo/framework"
+	//	"github.com/misgo/aresgo/text"
 )
 
 //常量定义
@@ -32,7 +31,7 @@ const (
 　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　■　　　　　　　　　　
 　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　■■　　　　　　　　　　
 　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　■■■■■　　　　　　　　　　　
-　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　■■■■　　　　　　　　　　　　　　　` + "    Version：" + Version +
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　■■■■　　　　　　　　　　　　　　　` + "    Version：❤️" + Version +
 		"\r\n←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←      " + ` `
 
 	//数据库定义
@@ -227,37 +226,23 @@ func GetAppPath() (appPath string, appDir string) {
 }
 
 //访问远端接口，支持POST和GET
-func Curl(action string, url string, params map[string]interface{}) ([]byte, error) {
-	req := &fasthttp.Request{}
-	req.Header.SetMethod(action)
-	req.Header.SetContentType("application/x-www-form-urlencoded;charset=utf-8")
-	req.Header.Set("Connection", "Keep-Alive")
-	req.SetRequestURI(url)
-	var err error
-	if params != nil {
-		if len(params) > 0 {
-			sb := Text.NewString("")
-			for k, v := range params {
-				val := Text.GetBytes(v)
-				if err == nil {
-					sb.AppendBytes([]byte("&"))
-					sb.AppendBytes([]byte(k))
-					sb.AppendBytes([]byte("="))
-					sb.AppendBytes(val)
-				}
-			}
-			req.AppendBody(sb.ToBytes())
-		}
-	}
-	resp := &fasthttp.Response{}
-	client := &fasthttp.Client{}
-	client.Name = "areshttp"
-	err = client.Do(req, resp)
-	defer resp.ResetBody()
-	if resp.StatusCode() != 200 {
-		return nil, errors.New(fmt.Sprintf("地址[%s]链接失败！", url))
-	} else if err != nil {
-		return nil, err
-	}
-	return resp.Body(), nil
-}
+// func Curl(action string, url string, params map[string]interface{}) ([]byte, error) {
+// 	var err error
+// 	var bodystr []byte = nil
+// 	if params != nil {
+// 		if len(params) > 0 {
+// 			sb := Text.NewString("")
+// 			for k, v := range params {
+// 				val := Text.GetBytes(v)
+// 				if err == nil {
+// 					sb.AppendBytes([]byte("&"))
+// 					sb.AppendBytes([]byte(k))
+// 					sb.AppendBytes([]byte("="))
+// 					sb.AppendBytes(val)
+// 				}
+// 			}
+// 			bodystr = sb.ToBytes()
+// 		}
+// 	}
+// 	return frame.Curl(action, url, "form", bodystr)
+// }
